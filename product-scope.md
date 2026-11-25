@@ -6,7 +6,7 @@ The first release helps players arrange an in-person Magic: The Gathering game n
 
 - A host approves seat requests. Pending requests do not reserve seats.
 - At creation, the host chooses whether to play or only provide the table. Playing is selected by default. A playing host occupies one seat; a host who only provides the table occupies none. A four-player session therefore begins with three or four available seats respectively.
-- Authentication supports email magic links, Google, and Apple. The provider remains undecided.
+- The NestJS backend manages authentication through email magic links, Google, and Apple sign-in. It owns application accounts and sessions; email delivery and account linking details remain open.
 - The app targets iOS and Android through Expo.
 
 ## Working MVP assumptions

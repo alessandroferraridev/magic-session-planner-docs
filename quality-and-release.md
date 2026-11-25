@@ -11,6 +11,7 @@ The critical guarantees are correct nearby results, reliable seat allocation, an
 | Geographic integration tests | Known locations inside, outside, and on the radius boundary; kilometers converted to meters; swapped coordinates; private areas; invalid coordinates |
 | Concurrency tests | Multiple approvals compete for one seat; approval races with cancellation, withdrawal, completion, and capacity edits |
 | API tests | Token validation, hidden drafts, field validation, hostParticipates default and seat counts, pagination, rate limiting, ownership, and protected location access for playing and non-playing hosts |
+| Custom authentication tests | Magic-link expiry and atomic single consumption, concurrent token redemption, consistent link-request responses, social issuer and audience checks, state or nonce mismatch, refresh rotation and reuse, and device or global session revocation |
 | Mobile component tests | Discovery states, form validation, membership status, failed actions, and refresh after a conflict |
 | Device end to end tests | Email magic link, Google, and Apple sign-in on iOS and Android; expired or reused links, cancelled social sign-in, failed callbacks; two-account host and join flow in both host modes, denied permission, GPS off, manual location, poor connectivity, and token expiry |
 | Accessibility checks | Screen reader labels, focus after errors, large text, touch targets, and status communicated beyond color |
@@ -24,6 +25,7 @@ Use Jest and NestJS API test tooling for backend checks. Use React Native Testin
 - Request foreground location when needed and provide manual search. Do not request background tracking.
 - Store private venue addresses separately, restrict reads server-side, and prevent sensitive response caching and analytics capture.
 - Validate payloads and enforce ownership, bounded search ranges, per-user and per-IP rate limits, and request size limits.
+- Store magic-link and refresh token hashes, restrict credential access, and redact authentication payloads and callback parameters from logs. Verify identity ownership before linking accounts once its policy is defined.
 - Limit public participant information to display names and approved membership. Pending requests remain visible only to their owner and host.
 - Define retention periods before the pilot. Deletion processing must cancel future hosted sessions, withdraw future memberships, revoke access, and delete or anonymize profile and venue information according to the agreed retention policy.
 - Restrict operator access, record moderation actions, and define a report response process. Confirm launch audience and age requirements before public distribution.
@@ -36,10 +38,12 @@ Inspect query plans to confirm geographic index use and avoid loading all sessio
 
 ## Release checklist
 
+- Follow the [Git workflow](./git-workflow.md): pull requests for integration, protected `main` and `dev`, a tested release candidate, a version tag, and release or hotfix corrections returned to `dev`.
 - CI passes linting, type checks, meaningful tests, API contract generation, and build validation in each repository.
 - Staging and production use separate credentials and databases, HTTPS, validated environments, and managed backups.
 - Migrations are tested from both a fresh database and the previous release. Production schema changes remain compatible with the currently installed app and previous API release.
 - Secrets and privileged provider keys are absent from source control and app bundles.
+- Custom authentication has passing challenge replay, social identity validation, refresh token rotation, and revocation checks. Email delivery and mobile callbacks work in the target environment.
 - Database restore and application rollback procedures are exercised; destructive schema rollback uses a documented recovery procedure.
 - Privacy policy, support contact, account deletion route, store location permission text, and privacy declarations match actual behavior.
 - The pilot confirms all three sign-in methods on iOS and Android, both host participation choices, public and private venue flows, location denial, cancellation, the final-seat race, and an app update against the previous API contract.

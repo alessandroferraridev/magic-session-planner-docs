@@ -6,12 +6,19 @@ Deliver one usable flow at a time: create a session, find it nearby, then confir
 
 - Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
 - Use the confirmed iOS and Android platforms through Expo. Confirm the launch area, languages, and whether the pilot includes private homes.
-- Select an authentication provider supporting the confirmed email magic link, Google, and Apple methods; define account linking. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
+- Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select authentication libraries and email delivery, and define account linking and session lifetimes. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
+- Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Plan branch protections and CI setup for each repository.
 - Resolve session cancellation, private address disclosure, retention periods, and an operator contact for reports.
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
 
 ## Step 1 Establish the two projects
+
+Repository setup:
+
+- Create `dev` from the current bootstrap history where absent and work on feature branches derived from it.
+- Configure pull requests, protections for `main` and `dev`, required CI checks, and independent release tags in each repository. Add actual required check names only once those jobs exist.
+- Configure validated `dev` changes for staging deployment or internal mobile builds, then tagged `main` releases for production delivery or store builds.
 
 Backend tasks:
 
@@ -31,13 +38,14 @@ App tasks:
 
 ## Step 2 Add identity and profiles
 
-Depends on step 1 and authentication provider selection.
+Depends on step 1, authentication library selection, email delivery setup, and Google and Apple application registration.
 
 - Implement email magic link, Google, and Apple sign-in, app return routing, logout, token expiry, and secure token storage on iOS and Android.
+- Add local authentication identity, magic-link challenge, authentication session, and refresh token migrations. Implement single-use challenge consumption, application token issuance, refresh rotation and reuse detection, and device or global logout.
 - Handle expired and reused magic links, resend requests, cancelled social sign-in, and failed callbacks. Define and implement account linking only after its policy is decided.
-- Verify token signature, issuer, audience, and expiry in NestJS; map the identity to a local user.
+- Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
 - Implement profile read and update, account state checks, and authentication guards.
-- Add initial authorization tests and fixtures for host, player, and unrelated user accounts.
+- Add authentication and authorization tests covering replay, expired challenges, refresh reuse, revoked sessions, cross-account access, and fixtures for host, player, and unrelated user accounts.
 
 **Complete when:** all three sign-in methods work on iOS and Android development builds; two users can sign in independently, edit only their own profile, and recover cleanly from expired links and sessions. Logs contain no authentication tokens, magic-link tokens, authorization codes, or sensitive profile data.
 
@@ -95,6 +103,7 @@ Depends on steps 1 through 5.
 Depends on pilot results and launch readiness checks.
 
 - Configure production environments, store listings, location permission descriptions, privacy declarations, and support contacts.
+- Stabilize a release branch, validate its artifacts, merge through pull requests into `main`, tag the release, and return release fixes to `dev`. Use the documented hotfix flow for urgent production fixes.
 - Run migration and API compatibility checks before deploying the production API and distributing the mobile app.
 - Monitor errors, failed join attempts, empty searches, and latency. Investigate reports through the operator process.
 - Prioritize improvements using pilot feedback: push notifications, more formats, maps, recurring sessions, waitlists, chat, store verification, and moderation tools.
