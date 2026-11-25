@@ -12,6 +12,7 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | Authentication ownership | Custom authentication in the NestJS backend | Own application users, identity associations, sessions, and tokens; integrate directly with Google and Apple for social sign-in |
 | Platforms | iOS and Android through Expo | Both platforms are required for development, testing, and distribution |
 | Git workflow | Gitflow using main, dev, feature, fix, release, and hotfix branches | main holds releases; dev integrates changes and feeds staging; use pull requests and independent repository versions |
+| Testing | Unit tests, integration tests, and E2E tests for API and app | Implement suites from scaffolding and add feature coverage continuously; required failures block integration or release |
 
 ## Working assumptions and open decisions
 
@@ -30,6 +31,7 @@ The remaining defaults support planning only. They have not been confirmed.
 | Launch geography and language | One pilot area; initial language to confirm | Determines geocoder coverage, content, and testing |
 | Infrastructure budget | To be set | Determines hosting, database, geocoder, and build service choices |
 | Retention and audience | To be set before pilot | Determines deletion jobs, privacy wording, and distribution requirements |
+| Test infrastructure details | Confirm library versions, Android and iOS runners, CI budget, and initial coverage thresholds during scaffolding | Test levels are confirmed; execution infrastructure and numeric coverage gates remain to be selected |
 
 ## Questions still open
 

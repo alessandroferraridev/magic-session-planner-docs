@@ -11,6 +11,7 @@ Start with a complete flow from finding a nearby table to receiving a confirmed 
 - Authentication is managed by the NestJS backend, with email magic links, Google, and Apple sign-in. The backend owns application users, sessions, and tokens.
 - The mobile app targets iOS and Android through Expo.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
+- Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
 
 ## Read the plan
 
@@ -21,6 +22,7 @@ Start with a complete flow from finding a nearby table to receiving a confirmed 
 | [Data and API](./data-and-api.md) | Entities, endpoints, permissions, and seat allocation |
 | [Development roadmap](./development-roadmap.md) | Ordered delivery steps with dependencies and completion checks |
 | [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
+| [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
 | [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
 | [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
 

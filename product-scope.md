@@ -8,6 +8,7 @@ The first release helps players arrange an in-person Magic: The Gathering game n
 - At creation, the host chooses whether to play or only provide the table. Playing is selected by default. A playing host occupies one seat; a host who only provides the table occupies none. A four-player session therefore begins with three or four available seats respectively.
 - The NestJS backend manages authentication through email magic links, Google, and Apple sign-in. It owns application accounts and sessions; email delivery and account linking details remain open.
 - The app targets iOS and Android through Expo.
+- API and app development must include unit, integration, and E2E tests, implemented alongside their features from the initial scaffold. See the [testing strategy](./testing-strategy.md).
 
 ## Working MVP assumptions
 
@@ -84,3 +85,4 @@ The app shows authoritative status when reopened or refreshed. Push alerts for a
 - Location denial never blocks manually searching a town or area.
 - Nearby lists and non-member session details never expose a private venue's exact address or coordinates.
 - Errors explain the next action, and core controls work with screen readers and larger text.
+- Automated unit, integration, and E2E suites cover the applicable critical scenarios in the testing strategy and pass for the release candidate, including Android and iOS app journeys. Recorded real-provider and device smoke checks complement those suites.

@@ -2,6 +2,8 @@
 
 Deliver one usable flow at a time: create a session, find it nearby, then confirm a seat. Each step ends with a concrete completion check. The order below expresses dependencies; dates should be estimated after the initial scaffold and provider choices.
 
+Unit, integration, and E2E tests are required for both API and app. Implement the relevant scenarios with each feature using the [testing strategy](./testing-strategy.md); testing is part of each step's completion criteria.
+
 ## Step 0 Resolve the product decisions
 
 - Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
@@ -19,6 +21,7 @@ Repository setup:
 - Work on feature branches derived from the existing protected `dev` branch in each repository.
 - Use the configured pull request rules, merge strategies, and protected release tags. Add actual required CI check names only once those jobs exist, and version API and app releases independently.
 - Configure validated `dev` changes for staging deployment or internal mobile builds, then tagged `main` releases for production delivery or store builds.
+- Establish separate unit, integration, and E2E commands and CI jobs. Provision isolated test databases and Android/iOS test runners; add passing, stable job names to the GitHub rulesets once operational.
 
 Backend tasks:
 
@@ -26,6 +29,7 @@ Backend tasks:
 - Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
+- Configure Jest, NestJS TestingModule, PostgreSQL/PostGIS integration fixtures, and a Supertest HTTP E2E suite. Start with meaningful configuration or validation unit checks, migration integration checks, and API readiness over HTTP against the test database.
 
 App tasks:
 
@@ -33,8 +37,9 @@ App tasks:
 - Establish navigation, accessible shared controls, theme tokens, loading states, and error states.
 - Configure API base URLs, TanStack Query, secure storage, environment examples, and basic CI.
 - Document simulator and physical device setup, including API access over the local network.
+- Configure Jest with jest-expo, React Native Testing Library, and a native E2E runner. Establish unit and integration examples and an installed-app smoke flow against the real test API; document Android and iOS execution prerequisites.
 
-**Complete when:** both projects pass CI, the API reports database readiness, and iOS and Android development builds load a screen and call the API. Framework setup starts here; it is not part of repository initialization.
+**Complete when:** both projects have runnable unit, integration, and E2E suites and pass the initial CI gates. The API reports database readiness, and Android and iOS test builds load a screen and call the real test API. Framework and test setup start here; they are not part of repository initialization.
 
 ## Step 2 Add identity and profiles
 
@@ -59,6 +64,7 @@ Depends on step 2.
 - Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
 - Enforce time, capacity, ownership, and venue-edit restrictions on the API.
+- Cover creation rules with unit tests, transactional persistence and API contracts with integration and HTTP E2E tests, and both host participation choices in app integration and native E2E flows.
 
 **Complete when:** a host can publish and manage a session in either playing mode. A four-player table starts with three available seats when the host plays and four otherwise. The second account can see the session but cannot read the exact private address or edit it.
 
@@ -71,6 +77,7 @@ Depends on step 3 and geocoder selection.
 - Build the nearby list, filters, pagination, refresh, approximate distance labels, and no-results state.
 - Redact search coordinates from logging at the application and proxy layers.
 - Measure geographic query plans with representative data and verify units and coordinate ordering.
+- Add real PostGIS integration cases, HTTP E2E filters and privacy assertions, app integration state handling, and a native discovery flow including location denial and manual search.
 
 **Complete when:** test sessions inside and outside a selected radius appear correctly; full and cancelled sessions are excluded; manual search works with GPS disabled; private exact points never affect public radius filtering or ordering.
 
@@ -83,6 +90,7 @@ Depends on step 4.
 - Refresh server state after mutations and display useful conflict messages if the last seat is taken.
 - Restrict exact location access to eligible confirmed players and the host.
 - Add the scheduled completion job and cancellation history.
+- Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
 
 **Complete when:** two accounts complete discovery through approval; concurrent approval of the last seat admits one player; leaving frees a seat; cancellation or withdrawal revokes private location access.
 
@@ -90,7 +98,7 @@ Depends on step 4.
 
 Depends on steps 1 through 5.
 
-- Complete the test matrix in [Quality and release](./quality-and-release.md), including real devices and location denial.
+- Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
 - Add reporting, a minimal operator workflow, account deletion processing, and published privacy and support information.
 - Deploy staging with HTTPS, managed PostGIS, migrations, backup configuration, log redaction, and error monitoring.
 - Build distributable iOS and Android test versions and run a small invited pilot with local players or a store.
@@ -104,6 +112,7 @@ Depends on pilot results and launch readiness checks.
 
 - Configure production environments, store listings, location permission descriptions, privacy declarations, and support contacts.
 - Stabilize a release branch, validate its artifacts, merge through pull requests into `main`, tag the release, and return release fixes to `dev`. Use the documented hotfix flow for urgent production fixes.
+- Require the applicable unit, integration, API HTTP E2E, and Android/iOS E2E gates to pass for the candidate revisions before release promotion.
 - Run migration and API compatibility checks before deploying the production API and distributing the mobile app.
 - Monitor errors, failed join attempts, empty searches, and latency. Investigate reports through the operator process.
 - Prioritize improvements using pilot feedback: push notifications, more formats, maps, recurring sessions, waitlists, chat, store verification, and moderation tools.
