@@ -6,7 +6,7 @@ Represent a scheduled table as a session and keep participation separate so requ
 
 | Entity | Principal fields | Constraints |
 | --- | --- | --- |
-| User | UUID, display name, language, timestamps, deletion state | Local application identity independent of the chosen sign-in method; public profile excludes authentication details |
+| User | UUID, display name, preferredLocale, timestamps, deletion state | preferredLocale is en or it; local identity is independent of sign-in method and geography; public profile excludes authentication details |
 | AuthIdentity | UUID, user ID, method, issuer and subject where applicable, email and verification state | Unique external issuer and subject; an identity belongs to one local user; account linking policy remains to be defined |
 | MagicLinkChallenge | UUID, recipient email, token hash, expires at, consumed at, timestamps | No plaintext token stored; atomic single consumption before expiry |
 | AuthSession | UUID, user ID, created at, expires at, revoked at | Application login session, separate from a scheduled game session; supports per-device and global logout |
@@ -55,7 +55,7 @@ All routes below use `/v1`, except service health endpoints. The following authe
 
 | Method and route | Purpose and access |
 | --- | --- |
-| `POST /auth/magic-link` | Public, rate-limited request; respond consistently without revealing whether an address exists |
+| `POST /auth/magic-link` | Public, rate-limited request with optional en or it locale for the email template; respond consistently without revealing whether an address exists |
 | `POST /auth/magic-link/consume` | Public challenge exchange; consume a valid unexpired token once and issue an application session |
 | `GET /auth/:provider/start` | Start Google or Apple sign-in with transaction state; provider must be an explicit allowlisted value |
 | `GET or POST /auth/:provider/callback` | Validate the provider response using its supported callback method; complete app return without exposing long-lived credentials in the URL |
@@ -70,9 +70,9 @@ Authentication is required for the application routes below unless explicitly no
 | Method and route | Purpose and access |
 | --- | --- |
 | `GET /me` | Current user's profile and preferences |
-| `PATCH /me` | Update own allowed profile fields |
+| `PATCH /me` | Update own allowed profile fields, including preferredLocale as en or it |
 | `DELETE /me` | Request account deletion; process hosted sessions and memberships safely |
-| `GET /locations/search?q=...` | Rate-limited town or area search through the selected geocoder |
+| `GET /locations/search?q=...` | Rate-limited global town or area search through the selected geocoder; do not fix results to a launch country |
 | `POST /venues` | Create an owned venue with explicit visibility |
 | `GET /venues/mine` | List owned venues, with private details only for their owner |
 | `PATCH /venues/:id` | Update an owned venue subject to published-session restrictions |
@@ -106,6 +106,8 @@ Return session ID, title, format, UTC start and end, timezone, public venue name
 
 - Validate DTOs with a global whitelist and reject unknown fields; derive actor and ownership IDs from the authenticated user.
 - Return UTC ISO 8601 timestamps and accept explicit offsets or UTC. Resolve daylight saving ambiguity in the creation form before submission.
+- Accept valid geographic coordinates worldwide. Interface locale, account location, and device position must not restrict the countries in which a user can create a venue or search for sessions.
+- Keep interface locale, session play language, and venue timezone independent. Validate preferredLocale against en and it; use English as the proposed default for magic-link email requests without a locale. Stable error codes allow the app to show localized messages without changing the response schema.
 - Return consistent errors with `code`, `message`, optional `fieldErrors`, and a request ID. Use `400` for invalid input, `401` for missing or invalid authentication, `403` for forbidden visible operations, `404` for missing or hidden resources, `409` for conflicting state, and `429` for throttling.
 - Make publish, cancel, approve, and withdraw safe to retry. Use a per-user idempotency key on session creation to avoid duplicate sessions when a connection fails after saving.
 - Return `Cache-Control: no-store` on protected location responses. Do not put private coordinates in discovery payloads, analytics, or push notification text.
