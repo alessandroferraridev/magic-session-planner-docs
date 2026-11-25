@@ -8,8 +8,10 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | --- | --- | --- |
 | Joining policy | Host approval | Players request a seat; only approval confirms participation and occupies a seat |
 | Host participation | Chosen when creating the session; participating is the default | A playing host occupies one seat; a host who only provides the table occupies none and still manages the session |
-| Authentication | Email magic link, Google, and Apple | All three sign-in methods are in scope; the authentication provider is still to be chosen |
+| Authentication methods | Email magic link, Google, and Apple | All three sign-in methods are in scope |
+| Authentication ownership | Custom authentication in the NestJS backend | Own application users, identity associations, sessions, and tokens; integrate directly with Google and Apple for social sign-in |
 | Platforms | iOS and Android through Expo | Both platforms are required for development, testing, and distribution |
+| Git workflow | Gitflow using main, dev, feature, fix, release, and hotfix branches | main holds releases; dev integrates changes and feeds staging; use pull requests and independent repository versions |
 
 ## Working assumptions and open decisions
 
@@ -23,7 +25,7 @@ The remaining defaults support planning only. They have not been confirmed.
 | Search experience | List first; map later | Delivers useful discovery before map integration |
 | Discovery origin | Current foreground location or manually selected town | Requires permission handling and geocoding |
 | Notifications | In-app refresh first; push later | Core participation works without notification delivery |
-| Authentication provider | Managed provider proposed; vendor to be chosen | Must support email magic links, Google, and Apple; callback and account linking policies remain open |
+| Authentication implementation details | Libraries, email delivery, token lifetimes, and account linking rules to be selected | Custom backend ownership is confirmed; implementation choices remain open |
 | Changes to host participation | To be decided | Define whether and how the host can change their playing choice after session creation |
 | Launch geography and language | One pilot area; initial language to confirm | Determines geocoder coverage, content, and testing |
 | Infrastructure budget | To be set | Determines hosting, database, geocoder, and build service choices |
@@ -33,7 +35,7 @@ The remaining defaults support planning only. They have not been confirmed.
 
 1. Should players and stores both host, and should private addresses stay hidden until a seat is confirmed?
 2. Should the first version focus on Commander or launch with multiple formats?
-3. Which authentication provider should supply the three confirmed sign-in methods, and how should accounts be linked across methods?
+3. Which email delivery service and authentication libraries should be used, and how should accounts be linked across sign-in methods?
 4. Can an existing session's host change between playing and only providing the table?
 
 Before implementation, also confirm the launch area, initial languages, available monthly budget, and the remaining product defaults above. Keep the affected scope, architecture, API, and roadmap sections aligned as answers arrive.
