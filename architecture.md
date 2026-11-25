@@ -14,7 +14,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | API contract | NestJS OpenAPI generation | Documented endpoints and generated mobile client types |
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
-| Authentication | Managed identity provider, selected in step 0 | Login, verification, and recovery without building password storage |
+| Authentication | Email magic links, Google, and Apple; provider to be selected in step 0 | Three confirmed sign-in methods; managed provider remains a proposed implementation choice |
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
 | CI and deployment | Provider selected in step 0 | Automated validation and separate staging and production environments |
 
@@ -34,13 +34,19 @@ flowchart LR
 
 Token signature keys should be cached according to the provider's guidance; validating a token must not require a remote request on every API call. Store authentication tokens in device secure storage and enforce all authorization rules on the API.
 
+## Confirmed authentication methods
+
+Support email magic links, Google sign-in, and Apple sign-in in the Expo app on iOS and Android. Configure the selected provider and app return routes for each method. Handle expired or already-used magic links, cancelled social sign-in, and failed callbacks without creating a signed-in state prematurely.
+
+The authentication provider, email delivery setup, and policy for linking identities across methods remain open decisions. These sign-in choices do not select a provider or define automatic account merging.
+
 ## Backend modules
 
 - `Auth`: token verification and authenticated user resolution.
 - `Users`: display profiles, preferences, and deletion requests.
 - `Venues`: public search locations and protected private addresses.
-- `Sessions`: drafts, publishing, editing, cancellation, and lifecycle jobs.
-- `Participation`: requests, approvals, withdrawal, and capacity transactions.
+- `Sessions`: drafts, the host's playing choice at creation, publishing, editing, cancellation, and lifecycle jobs.
+- `Participation`: requests requiring host approval, optional approved host membership, withdrawal, and capacity transactions.
 - `Discovery`: geographic filtering, distance sorting, and pagination.
 - `Moderation`: basic reports and operator actions before public launch.
 - `Health`: liveness, readiness, and dependency status.

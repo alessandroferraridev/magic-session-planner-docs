@@ -4,6 +4,13 @@ Build a mobile application where Magic: The Gathering players can discover nearb
 
 Start with a complete flow from finding a nearby table to receiving a confirmed seat. Add maps, chat, and advanced store features after that flow works reliably.
 
+## Confirmed product choices
+
+- Seat requests require host approval.
+- At session creation, the host chooses whether to play or only provide the table. Playing is the default.
+- Sign-in supports email magic links, Google, and Apple. The authentication provider remains undecided.
+- The mobile app targets iOS and Android through Expo.
+
 ## Read the plan
 
 | Document | Purpose |
@@ -13,7 +20,7 @@ Start with a complete flow from finding a nearby table to receiving a confirmed 
 | [Data and API](./data-and-api.md) | Entities, endpoints, permissions, and seat allocation |
 | [Development roadmap](./development-roadmap.md) | Ordered delivery steps with dependencies and completion checks |
 | [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
-| [Open decisions](./open-decisions.md) | Product questions and working assumptions |
+| [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
 
 ## Workspace layout
 
@@ -30,7 +37,7 @@ This delivery initializes repositories and records the plan. Framework scaffoldi
 
 ## Initial delivery sequence
 
-1. Resolve the MVP product decisions and choose the authentication and hosting providers.
+1. Resolve the remaining MVP product decisions and choose the authentication and hosting providers.
 2. Scaffold the NestJS and React Native projects and establish local development and CI.
 3. Implement authentication, profiles, venue locations, and session publishing.
 4. Deliver location permission handling and nearby table discovery.

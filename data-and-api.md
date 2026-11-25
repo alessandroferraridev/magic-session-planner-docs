@@ -9,13 +9,17 @@ Represent a scheduled table as a session and keep participation separate so requ
 | User | UUID, identity issuer and subject, display name, language, timestamps, deletion state | Unique issuer and subject; public profile excludes email and identity identifiers |
 | Venue | UUID, owner ID, name, type, visibility, public area label, public discovery point, timezone, accessibility notes | Public point required before publishing; only owner can edit |
 | VenuePrivateLocation | Venue ID, exact address, exact point | Separate access path; never included by default serialization |
-| Session | UUID, host ID, venue ID, title, format, description, starts at, ends at, timezone, capacity, lifecycle, timestamps | End after start; MVP capacity 2 to 16; host must own the venue |
+| Session | UUID, host ID, hostParticipates, venue ID, title, format, description, starts at, ends at, timezone, capacity, lifecycle, timestamps | hostParticipates defaults to true; end after start; proposed MVP capacity 2 to 16; host must own the venue |
 | Participation | UUID, session ID, user ID, status, requested at, decided at, decided by | Unique session and user; statuses pending, approved, rejected, withdrawn |
 | Report | UUID, reporter ID, session ID or user ID, category, details, state, timestamps | Authenticated creation; only operators can inspect reports |
 
 Use foreign keys and indexes on session start time, host, lifecycle, and participation session and status. Add a unique constraint on participation `(session_id, user_id)` and a GiST index on the public discovery point. Explicit database checks cover capacity bounds and time ordering.
 
-Create an approved host participation in the same transaction as the session. Compute confirmed players from approved participation rows initially; available seats equal capacity minus that count. A cached count can be introduced later only with transactional consistency guarantees.
+Session creation accepts `hostParticipates`, a boolean defaulting to `true` when omitted. Create an approved host participation in the same transaction as the session only when it is true. When it is false, create no host participation and leave all player seats available. Return the selected value in session details so the app can show whether the host plays.
+
+Compute confirmed players from approved participation rows initially; available seats equal capacity minus that count, with no additional subtraction for the host. A cached count can be introduced later only with transactional consistency guarantees.
+
+Host authorization is based on `session.hostId`, not the existence of an approved participation. A host who only provides the table can still edit, publish, cancel, review requests, approve players, and access their venue details. Changes to `hostParticipates` after creation remain an open product decision; define the edit and withdrawal rules before implementing that behavior.
 
 Once a venue has a published future session, changes to its location, visibility, and timezone are blocked. A host creates a new venue or cancels affected sessions first. This prevents a venue edit silently moving an approved game.
 
@@ -28,7 +32,7 @@ Once a venue has a published future session, changes to its location, visibility
 | Player requests again | Withdrawn to pending | Session remains eligible; a rejected player cannot request again in the MVP |
 | Host approves | Pending to approved | Host owns session; published and future; capacity available |
 | Host rejects | Pending to rejected | Host owns session and session has not started |
-| Player withdraws or leaves | Pending or approved to withdrawn | Own membership before start; host cannot withdraw |
+| Player withdraws or leaves | Pending or approved to withdrawn | Own non-host membership before start; changes to the host's playing choice remain undecided |
 
 A cancelled session retains participation records for history, but allows no further request or approval and grants no private address access. Completion also ends private address access. Session status is checked alongside participation status on every protected operation.
 
@@ -55,7 +59,7 @@ All routes below use `/v1`, except service health endpoints. Authentication is r
 | `GET /venues/mine` | List owned venues, with private details only for their owner |
 | `PATCH /venues/:id` | Update an owned venue subject to published-session restrictions |
 | `GET /sessions` | Nearby published sessions with public fields and availability |
-| `POST /sessions` | Create a draft and its host membership transactionally |
+| `POST /sessions` | Create a draft with hostParticipates defaulting to true; create an approved host membership only when the host plays, in the same transaction |
 | `GET /sessions/:id` | Public detail for published sessions; drafts only for their host |
 | `PATCH /sessions/:id` | Host edits subject to capacity and confirmed-player rules |
 | `POST /sessions/:id/publish` | Host validates and publishes a draft |

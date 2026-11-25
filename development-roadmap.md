@@ -4,9 +4,9 @@ Deliver one usable flow at a time: create a session, find it nearby, then confir
 
 ## Step 0 Resolve the product decisions
 
-- Confirm who can host, initial formats, joining policy, and whether the host always occupies a seat.
-- Confirm iOS and Android scope, launch area, languages, and whether the pilot includes private homes.
-- Select authentication, geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
+- Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
+- Use the confirmed iOS and Android platforms through Expo. Confirm the launch area, languages, and whether the pilot includes private homes.
+- Select an authentication provider supporting the confirmed email magic link, Google, and Apple methods; define account linking. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
 - Resolve session cancellation, private address disclosure, retention periods, and an operator contact for reports.
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
@@ -33,12 +33,13 @@ App tasks:
 
 Depends on step 1 and authentication provider selection.
 
-- Configure sign in, recovery, verification, logout, token expiry, and secure token storage.
+- Implement email magic link, Google, and Apple sign-in, app return routing, logout, token expiry, and secure token storage on iOS and Android.
+- Handle expired and reused magic links, resend requests, cancelled social sign-in, and failed callbacks. Define and implement account linking only after its policy is decided.
 - Verify token signature, issuer, audience, and expiry in NestJS; map the identity to a local user.
 - Implement profile read and update, account state checks, and authentication guards.
 - Add initial authorization tests and fixtures for host, player, and unrelated user accounts.
 
-**Complete when:** two users can sign in independently, edit only their own profile, and recover cleanly from expired sessions. Logs contain no tokens or sensitive profile data.
+**Complete when:** all three sign-in methods work on iOS and Android development builds; two users can sign in independently, edit only their own profile, and recover cleanly from expired links and sessions. Logs contain no authentication tokens, magic-link tokens, authorization codes, or sensitive profile data.
 
 ## Step 3 Publish hosted sessions
 
@@ -46,11 +47,12 @@ Depends on step 2.
 
 - Implement venue, protected venue location, session, and participation migrations and constraints.
 - Add venue forms with public versus private visibility and a public preview.
-- Implement draft creation, host participation, publishing, allowed edits, and cancellation.
+- Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
+- Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
 - Enforce time, capacity, ownership, and venue-edit restrictions on the API.
 
-**Complete when:** a host can publish a valid session, see it from a second account, and cancel it; the second account cannot read the exact private address or edit the session.
+**Complete when:** a host can publish and manage a session in either playing mode. A four-player table starts with three available seats when the host plays and four otherwise. The second account can see the session but cannot read the exact private address or edit it.
 
 ## Step 4 Discover nearby tables
 
