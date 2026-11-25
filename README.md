@@ -35,7 +35,7 @@ magic-session-planner-project/
 
 All three folders are independent Git repositories with an initial branch named `main`. The shared product and development plan is maintained in `magic-session-planner-docs`. Keep the three repositories alongside each other in the parent workspace so relative documentation links resolve. The parent workspace is not a Git repository.
 
-Future work follows the [Git workflow](./git-workflow.md): branch from `dev`, integrate through pull requests, and promote releases to `main`. Provisioning branch protections and CI is part of project setup.
+Future work follows the [Git workflow](./git-workflow.md): branch from `dev`, integrate through pull requests, and promote releases to `main`. All three repositories have active GitHub rulesets and use `dev` as their default branch. CI checks and deployment pipelines remain project setup tasks.
 
 This delivery initializes repositories and records the plan. Framework scaffolding, dependency installation, database setup, and application implementation begin in roadmap step 1.
 
