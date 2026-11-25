@@ -7,7 +7,7 @@ Deliver one usable flow at a time: create a session, find it nearby, then confir
 - Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
 - Use the confirmed iOS and Android platforms through Expo. Confirm the launch area, languages, and whether the pilot includes private homes.
 - Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select authentication libraries and email delivery, and define account linking and session lifetimes. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
-- Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Plan branch protections and CI setup for each repository.
+- Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
 - Resolve session cancellation, private address disclosure, retention periods, and an operator contact for reports.
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
@@ -16,8 +16,8 @@ Deliver one usable flow at a time: create a session, find it nearby, then confir
 
 Repository setup:
 
-- Create `dev` from the current bootstrap history where absent and work on feature branches derived from it.
-- Configure pull requests, protections for `main` and `dev`, required CI checks, and independent release tags in each repository. Add actual required check names only once those jobs exist.
+- Work on feature branches derived from the existing protected `dev` branch in each repository.
+- Use the configured pull request rules, merge strategies, and protected release tags. Add actual required CI check names only once those jobs exist, and version API and app releases independently.
 - Configure validated `dev` changes for staging deployment or internal mobile builds, then tagged `main` releases for production delivery or store builds.
 
 Backend tasks:
