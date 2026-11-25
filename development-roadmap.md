@@ -7,7 +7,7 @@ Unit, integration, and E2E tests are required for both API and app. Implement th
 ## Step 0 Resolve the product decisions
 
 - Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
-- Use the confirmed iOS and Android platforms through Expo. Confirm the launch area, languages, and whether the pilot includes private homes.
+- Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Confirm whether the pilot includes private homes; the pilot must not establish a regional product restriction.
 - Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select authentication libraries and email delivery, and define account linking and session lifetimes. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
 - Resolve session cancellation, private address disclosure, retention periods, and an operator contact for reports.
@@ -35,6 +35,7 @@ App tasks:
 
 - Scaffold React Native with Expo, TypeScript, and routing.
 - Establish navigation, accessible shared controls, theme tokens, loading states, and error states.
+- Establish English and Italian translation catalogs, locale-aware formatting, a language setting, and a persisted preference. Keep locale independent of session geography and timezone.
 - Configure API base URLs, TanStack Query, secure storage, environment examples, and basic CI.
 - Document simulator and physical device setup, including API access over the local network.
 - Configure Jest with jest-expo, React Native Testing Library, and a native E2E runner. Establish unit and integration examples and an installed-app smoke flow against the real test API; document Android and iOS execution prerequisites.
@@ -46,6 +47,7 @@ App tasks:
 Depends on step 1, authentication library selection, email delivery setup, and Google and Apple application registration.
 
 - Implement email magic link, Google, and Apple sign-in, app return routing, logout, token expiry, and secure token storage on iOS and Android.
+- Localize authentication screens and email templates in English and Italian, including failures and expired-link recovery.
 - Add local authentication identity, magic-link challenge, authentication session, and refresh token migrations. Implement single-use challenge consumption, application token issuance, refresh rotation and reuse detection, and device or global logout.
 - Handle expired and reused magic links, resend requests, cancelled social sign-in, and failed callbacks. Define and implement account linking only after its policy is decided.
 - Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
@@ -60,6 +62,7 @@ Depends on step 2.
 
 - Implement venue, protected venue location, session, and participation migrations and constraints.
 - Add venue forms with public versus private visibility and a public preview.
+- Support worldwide venue locations and international address formats, with timezone selection tied to the venue rather than the interface language or device timezone.
 - Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
 - Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
@@ -74,10 +77,12 @@ Depends on step 3 and geocoder selection.
 
 - Add geographic indexes and parameterized radius, date, format, and available-seat queries.
 - Implement one-time foreground location lookup, permission explanation, and manual town selection.
+- Allow manual search destinations worldwide and verify the selected geocoder across countries. Do not apply a launch-country filter; handle address lookup gaps with manual positioning.
 - Build the nearby list, filters, pagination, refresh, approximate distance labels, and no-results state.
 - Redact search coordinates from logging at the application and proxy layers.
 - Measure geographic query plans with representative data and verify units and coordinate ordering.
 - Add real PostGIS integration cases, HTTP E2E filters and privacy assertions, app integration state handling, and a native discovery flow including location denial and manual search.
+- Include both interface locales, multiple hemispheres, high latitudes, and searches across the antimeridian in the relevant automated scenarios.
 
 **Complete when:** test sessions inside and outside a selected radius appear correctly; full and cancelled sessions are excluded; manual search works with GPS disabled; private exact points never affect public radius filtering or ordering.
 
@@ -101,7 +106,7 @@ Depends on steps 1 through 5.
 - Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
 - Add reporting, a minimal operator workflow, account deletion processing, and published privacy and support information.
 - Deploy staging with HTTPS, managed PostGIS, migrations, backup configuration, log redaction, and error monitoring.
-- Build distributable iOS and Android test versions and run a small invited pilot with local players or a store.
+- Build distributable iOS and Android test versions and run an invited pilot with players or stores, covering English and Italian and representative locations and timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 
 **Complete when:** critical defects are resolved, backups can be restored, a rollback is rehearsed, and pilot users can organize sessions without developer intervention.
@@ -117,7 +122,7 @@ Depends on pilot results and launch readiness checks.
 - Monitor errors, failed join attempts, empty searches, and latency. Investigate reports through the operator process.
 - Prioritize improvements using pilot feedback: push notifications, more formats, maps, recurring sessions, waitlists, chat, store verification, and moderation tools.
 
-**Complete when:** a player in the launch area can install the app, discover a real session, and receive a confirmed seat, with support and rollback procedures available.
+**Complete when:** a player can install the app, use English or Italian, discover or host a real session at a chosen location worldwide, and complete the seat request and approval flow, with support and rollback procedures available.
 
 ## Dependency overview
 

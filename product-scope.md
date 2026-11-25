@@ -1,6 +1,6 @@
 # Product scope
 
-The first release helps players arrange an in-person Magic: The Gathering game near a chosen location. A table represents one scheduled session at a venue with a fixed player capacity. It does not represent a store's live inventory of physical furniture or guarantee that a store has reserved a table.
+The first release helps players arrange an in-person Magic: The Gathering game anywhere in the world, with nearby discovery around a chosen location. A table represents one scheduled session at a venue with a fixed player capacity. It does not represent a store's live inventory of physical furniture or guarantee that a store has reserved a table.
 
 ## Confirmed MVP decisions
 
@@ -8,6 +8,8 @@ The first release helps players arrange an in-person Magic: The Gathering game n
 - At creation, the host chooses whether to play or only provide the table. Playing is selected by default. A playing host occupies one seat; a host who only provides the table occupies none. A four-player session therefore begins with three or four available seats respectively.
 - The NestJS backend manages authentication through email magic links, Google, and Apple sign-in. It owns application accounts and sessions; email delivery and account linking details remain open.
 - The app targets iOS and Android through Expo.
+- Session hosting and discovery are available globally, without a launch-country or region restriction.
+- The interface supports English and Italian. Language selection is independent of where a session is hosted.
 - API and app development must include unit, integration, and E2E tests, implemented alongside their features from the initial scaffold. See the [testing strategy](./testing-strategy.md).
 
 ## Working MVP assumptions
@@ -18,6 +20,14 @@ These are proposed defaults until the questions in [Open decisions](./open-decis
 - Commander is the first supported format. Store the format as an extensible value for later additions.
 - The app uses foreground location only.
 - Account access is required to browse and participate. Payments, chat, competitive matchmaking, deck management, ratings, and tournament brackets are outside the MVP.
+
+## Global availability and interface languages
+
+Hosts can create a session at any valid location worldwide. Players search near their current location or a manually selected destination anywhere in the world. The local search radius limits each query around its selected point; it does not restrict which countries or regions the application supports.
+
+Provide English and Italian translations for navigation, forms, validation, empty and error states, and user-facing authentication emails. Session titles, descriptions, and venue names remain user content without automatic translation. A session's play language is separate metadata from the interface language.
+
+Use the venue's IANA timezone to interpret and display session time, retaining UTC instants for storage. Choosing English or Italian does not change a session's location or timezone. An invited pilot is a validation exercise and does not define a geographic restriction for the product.
 
 ## Main user flows
 
@@ -85,4 +95,6 @@ The app shows authoritative status when reopened or refreshed. Push alerts for a
 - Location denial never blocks manually searching a town or area.
 - Nearby lists and non-member session details never expose a private venue's exact address or coordinates.
 - Errors explain the next action, and core controls work with screen readers and larger text.
+- Hosts can publish and players can discover sessions in different countries and hemispheres, including when the selected destination differs from the device location.
+- Critical flows, validation and error states, and authentication emails are available in both English and Italian, with session timezones preserved when changing language.
 - Automated unit, integration, and E2E suites cover the applicable critical scenarios in the testing strategy and pass for the release candidate, including Android and iOS app journeys. Recorded real-provider and device smoke checks complement those suites.

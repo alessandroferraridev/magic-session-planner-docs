@@ -10,12 +10,13 @@ Unit tests, integration tests, and E2E tests are mandatory for both API and app 
 | --- | --- |
 | Backend unit tests | Session time validation, allowed lifecycle transitions, host participation default and both creation choices, membership rules, and host authorization independent of playing status |
 | Database integration tests | Apply migrations on a fresh PostgreSQL and PostGIS instance; uniqueness, foreign keys, transaction rollback, locking, and idempotency |
-| Geographic integration tests | Known locations inside, outside, and on the radius boundary; kilometers converted to meters; swapped coordinates; private areas; invalid coordinates |
+| Geographic integration tests | Known locations inside, outside, and on the radius boundary across countries and hemispheres; antimeridian and high-latitude cases; meters conversion; private areas; invalid coordinates |
 | Concurrency tests | Multiple approvals compete for one seat; approval races with cancellation, withdrawal, completion, and capacity edits |
 | API E2E tests | Complete NestJS app over HTTP with PostgreSQL/PostGIS: token validation, hidden drafts, field validation, hostParticipates and seat counts, pagination, rate limiting, ownership, and protected location access |
 | Custom authentication tests | Magic-link expiry and atomic single consumption, concurrent token redemption, consistent link-request responses, social issuer and audience checks, state or nonce mismatch, refresh rotation and reuse, and device or global session revocation |
 | Mobile unit tests | Form rules, isolated component and hook behavior, validation errors, and accessible status presentation |
 | Mobile integration tests | Screens, navigation, forms, query cache, and API client together: discovery states, membership status, failed actions, and refresh after a conflict |
+| Localization tests | English and Italian translation completeness, persisted locale, validation and error messages, email templates, locale-aware formatting, and session timezone independence |
 | Device end to end tests | Email magic link, Google, and Apple sign-in on iOS and Android; expired or reused links, cancelled social sign-in, failed callbacks; two-account host and join flow in both host modes, denied permission, GPS off, manual location, poor connectivity, and token expiry |
 | Accessibility checks | Screen reader labels, focus after errors, large text, touch targets, and status communicated beyond color |
 
@@ -52,6 +53,7 @@ Inspect query plans to confirm geographic index use and avoid loading all sessio
 - Database restore and application rollback procedures are exercised; destructive schema rollback uses a documented recovery procedure.
 - Privacy policy, support contact, account deletion route, store location permission text, and privacy declarations match actual behavior.
 - The pilot confirms all three sign-in methods on iOS and Android, both host participation choices, public and private venue flows, location denial, cancellation, the final-seat race, and an app update against the previous API contract.
+- Verify English and Italian on both platforms, including authentication emails, accessibility, and longer translated text. Validate global hosting and manual destination search across countries, hemispheres, and timezones.
 - Public venue hosts understand that publishing does not reserve a store table; operators can act on reported or unsafe sessions.
 
 ## Deferred capabilities

@@ -18,7 +18,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
 | CI and deployment | Provider selected in step 0 | Automated validation and separate staging and production environments |
 
-Choose currently supported stable framework versions during scaffolding and commit each lockfile. Do not pin speculative versions in this plan. A map or geocoder provider must be selected before manual town search is implemented, considering coverage, cost, storage terms, and attribution.
+Choose currently supported stable framework versions during scaffolding and commit each lockfile. Do not pin speculative versions in this plan. A map or geocoder provider must be selected before manual town search is implemented, considering worldwide coverage, cost, storage terms, and attribution.
 
 ## System boundaries
 
@@ -70,6 +70,10 @@ The API is authoritative for capacity and membership. Invalidate session detail,
 
 ## Geographic search
 
+Hosting and discovery accept valid locations worldwide. Do not add launch-country allowlists or regional bounding boxes. Let players choose a search destination independently of their device location. A query radius remains local to its chosen point, including when that point is in another country.
+
+Choose global geocoding coverage and support manual venue positioning when an address cannot be resolved. Address input must support international formats without requiring one country's state or postal-code structure. Database hosting regions and capacity remain infrastructure choices; the product's worldwide location support does not require a separate deployment in every region.
+
 1. Accept latitude, longitude, radius in kilometers, date range, filters, and pagination. Validate coordinate ranges, cap radius at 100 km, page size at 50, and the search window at 90 days.
 2. Store public discovery positions as PostGIS `geography(Point, 4326)` and create a GiST index. Construct points with longitude first and latitude second.
 3. For public venues, use their published location. For private venues, use the host's selected neighborhood or area centroid as the discovery position; store the exact address and point separately.
@@ -80,6 +84,14 @@ The API is authoritative for capacity and membership. Invalidate session detail,
 Private venue search is approximate by design: neighborhood boundaries may affect whether a session appears near the edge of a radius. Show an approximate area label. Expose exact private details through a separate endpoint authorized for the host or an approved player, and revoke access after withdrawal, cancellation, or completion.
 
 Device coordinates are request data for discovery. Do not maintain a history of player movement. Redact location query parameters from API, proxy, analytics, and error logs. Use foreground location on explicit actions; do not enable background tracking.
+
+## English and Italian localization
+
+Keep English and Italian translation catalogs, identified by `en` and `it`, for interface text, validation and recovery messages, and authentication email templates. Store the user's preferred interface locale separately from a session's play language and timezone. User-authored titles, descriptions, and venue names are preserved as entered.
+
+The proposed initial selection uses the device language when supported, otherwise English, with an explicit language setting that persists for the user. Format dates, times, numbers, and plurals for the selected locale. Keep session time interpretation tied to the venue's IANA timezone and UTC storage, independently of the interface language or device timezone.
+
+Return stable machine-readable API error codes for the app to localize. Carry an explicit supported locale for pre-login magic-link requests so email templates use the chosen language. Verify complete translation keys and text expansion on both mobile platforms during testing.
 
 ## Repository responsibilities
 

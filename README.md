@@ -1,6 +1,6 @@
 # Magic session planner development plan
 
-Build a mobile application where Magic: The Gathering players can discover nearby tables, host a session, request a seat, and manage upcoming games. The backend will use NestJS and the mobile app will use React Native.
+Build a mobile application where Magic: The Gathering players worldwide can discover nearby tables, host a session, request a seat, and manage upcoming games. The backend will use NestJS and the mobile app will use React Native.
 
 Start with a complete flow from finding a nearby table to receiving a confirmed seat. Add maps, chat, and advanced store features after that flow works reliably.
 
@@ -10,6 +10,7 @@ Start with a complete flow from finding a nearby table to receiving a confirmed 
 - At session creation, the host chooses whether to play or only provide the table. Playing is the default.
 - Authentication is managed by the NestJS backend, with email magic links, Google, and Apple sign-in. The backend owns application users, sessions, and tokens.
 - The mobile app targets iOS and Android through Expo.
+- Hosting and discovery support locations worldwide. The interface supports English and Italian.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
 - Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
 
