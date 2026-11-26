@@ -24,7 +24,7 @@ Unit tests, integration tests, and E2E tests are mandatory for both API and app 
 
 Run geographic tests against PostgreSQL with PostGIS, not an SQLite substitute. Include a malicious request that tries to approve another host's applicant and discovery response assertions that reject any exact private location fields.
 
-The proposed tools are Jest and NestJS TestingModule for backend unit and integration tests, Supertest for API HTTP E2E, Jest with jest-expo and React Native Testing Library for app unit and integration tests, and Maestro for native E2E. Confirm compatible versions and device runners during scaffolding. Postman CLI is available for an optional deployed API smoke collection and supplements the primary suites. Use isolated test environments and injected test credentials, with no secrets committed.
+The accepted tools are Jest and NestJS TestingModule for backend unit/integration, Supertest for API HTTP E2E, Jest with jest-expo and React Native Testing Library for app unit/integration, and Maestro for native E2E. Use standard GitHub Actions Linux/macOS runners for the public repositories and included storage only. Confirm compatible versions during scaffolding and implement the accepted coverage gates from the testing strategy. Postman CLI can supplement the primary suites with an optional deployed smoke collection. Use isolated fixtures and credentials with no secrets committed.
 
 Automated E2E uses the real app, API, and database with controlled external-service boundaries. Real Google and Apple sign-in and device permission behavior also need recorded release smoke checks, as described in the testing strategy.
 
@@ -48,9 +48,10 @@ Inspect query plans to confirm geographic index use and avoid loading all sessio
 
 - Follow the [Git workflow](./git-workflow.md): pull requests for integration, protected `main` and `dev`, a tested release candidate, a version tag, and release or hotfix corrections returned to `dev`.
 - CI passes linting, type checks, required unit, integration, and E2E suites, API contract generation, and build validation for the changed application components.
-- Staging and production use separate credentials and databases, HTTPS, validated environments, and managed backups.
+- Staging and production use separate credentials and databases, HTTPS, validated environments, and verified included recovery features. Supplemental backups require existing private storage; no paid backup plan is funded.
 - Migrations are tested from both a fresh database and the previous release. Production schema changes remain compatible with the currently installed app and previous API release.
 - Secrets and privileged provider keys are absent from source control and app bundles.
+- Service plans and build runners respect the zero infrastructure budget: no paid upgrades, trials converting to payment, or overage fallback. Verify free quotas, clear quota-exhaustion states, and a controllable Resend sending domain before public magic-link delivery.
 - Custom authentication has passing challenge replay, social identity validation, refresh token rotation, and revocation checks. Email delivery and mobile callbacks work in the target environment.
 - Database restore and application rollback procedures are exercised; destructive schema rollback uses a documented recovery procedure.
 - Privacy policy, support contact, account deletion route, store location permission text, and privacy declarations match actual behavior.

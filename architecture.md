@@ -20,7 +20,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Email delivery | Resend | English and Italian authentication emails |
 | Push delivery | Expo push service proposed | In-app and push are confirmed; provider choice is an implementation proposal |
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
-| CI | GitHub Actions proposed | Standard runners for unit, integration, and device E2E jobs; details in the operational proposal |
+| CI | GitHub Actions standard runners, confirmed | Linux for API/Android and macOS for iOS; public repositories and included storage only |
 
 Choose currently supported stable framework versions during scaffolding and commit each lockfile. Select global geocoding and detail-map providers for venue entry, city resolution, and approved-participant maps, considering coverage, cost, storage terms, and attribution.
 
@@ -70,6 +70,8 @@ Controllers validate requests, guards enforce access, and services own business 
 ## Vercel deployment and scheduled work
 
 Deploy NestJS on Vercel and connect to Neon over TLS with a bounded connection pool. Use a direct migration connection where the selected migration tooling needs one, and execute migrations as a controlled release step rather than on every request. Validate the production PostgreSQL/PostGIS versions and transaction behavior in staging. [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs), [Neon pooling](https://neon.com/docs/connect/connection-pooling), and [Neon PostGIS](https://neon.com/docs/extensions/postgis) guide the setup.
+
+The accepted budget permits Vercel Hobby, Neon Free, and Resend Free only, with included service resources and no paid fallback. Validate Vercel's personal/non-commercial eligibility, free compute/storage/transfer quotas, and the durable adapter's no-charge behavior. A free plan can suspend service at its limits; global geographic support is not a promise of unlimited free capacity. Resend public email delivery also depends on an existing verified domain, whose availability is unresolved. See the [operating constraints](./operational-proposal.md).
 
 Do not rely on a permanent process or in-memory timer for notification delivery, session completion, or retention cleanup. Notifications are event-triggered: use a durable Vercel workflow or queue adapter with bounded handlers, retry metadata, idempotency keys, and duplicate-safe processing. The delivery adapter remains a proposal to validate during scaffolding. Do not schedule periodic notification-table scans.
 

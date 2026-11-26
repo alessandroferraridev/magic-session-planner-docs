@@ -19,9 +19,9 @@ API HTTP E2E tests and mobile E2E tests are separate suites. Rendering a screen 
 
 The API repository owns API unit, integration, and HTTP E2E suites. The app repository owns app unit, integration, and device E2E suites, including the launcher that selects a known API image or revision. Record both app and API revisions in full-system E2E results. The docs repository owns this shared specification and scenario traceability.
 
-## Proposed implementation tools
+## Accepted implementation tools
 
-| Scope | Proposed tools |
+| Scope | Accepted tools |
 | --- | --- |
 | API unit and integration | Jest and NestJS TestingModule; PostgreSQL/PostGIS containers for integration |
 | API E2E | Jest, NestJS test application, and Supertest HTTP requests |
@@ -29,7 +29,7 @@ The API repository owns API unit, integration, and HTTP E2E suites. The app repo
 | App E2E | Maestro flows against native Expo development or test builds on Android and iOS |
 | API smoke collection | Optional Postman CLI collection for deployed test environments; supplements the primary suites |
 
-Confirm supported versions during scaffolding and pin dependencies. The required test levels are confirmed; exact library versions, device runner hosting, and CI budget remain setup choices. iOS simulator execution needs a macOS/Xcode runner; plan a local Mac or hosted runner alongside Android test infrastructure. Do not assume the Windows development machine can run an iOS simulator.
+Confirm supported versions during scaffolding and pin dependencies. Use standard GitHub Actions Linux runners for API and Android work and standard macOS/Xcode runners for iOS, as accepted by the product owner. The public repositories enable the standard free compute model; paid runners, storage overages, and paid EAS builds are outside the zero infrastructure budget. The Windows development machine is not an iOS simulator runner.
 
 ## Required scenario coverage
 
@@ -93,7 +93,7 @@ Document environment setup, database lifecycle, native build prerequisites, and 
 
 Document-only changes use document checks instead of launching application suites. Keep relevant gate jobs present on every matching PR so conditional execution does not leave a required status pending. Promote a release only after the suites applicable to the changed components pass for the tested revisions; manual smoke checks supplement automated E2E rather than replacing them.
 
-Publish sanitized reports and failure diagnostics, including line and branch coverage. The [operational proposal](./operational-proposal.md) recommends initial thresholds, standard GitHub Actions runners, and artifact retention; those settings require acceptance and a compatible scaffold. Critical scenarios remain mandatory independently of percentages.
+Publish sanitized reports and bounded failure diagnostics within included storage, retaining them for at most seven days and shorter when quota requires it. Accepted gates are 80% statements/functions/lines and 75% branches for owned logic, and 90% branches for authentication, capacity/participation, and location authorization once those modules exist. Generated clients and declarations may be excluded explicitly; business modules may not. The [operational document](./operational-proposal.md) records accepted runner and budget constraints. Critical scenarios remain mandatory independently of percentages.
 
 Failed required tests block integration or release. Retain failure evidence when rerunning a flaky test; address the cause rather than treating repeated retries as a passing result. A missing required critical scenario remains unfinished work.
 

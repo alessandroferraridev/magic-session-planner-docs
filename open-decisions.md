@@ -21,6 +21,9 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | Interface languages | English and Italian | Localize the app and user-facing authentication emails in en and it; language preference is independent of session location |
 | Git workflow | Gitflow using main, dev, feature, fix, release, and hotfix branches | main holds releases; dev integrates changes and feeds staging; use pull requests and independent repository versions |
 | Testing | Unit tests, integration tests, and E2E tests for API and app | Implement suites from scaffolding and add feature coverage continuously; required failures block integration or release |
+| Infrastructure budget | Zero infrastructure spending; budget only for app-store publication | Use free tiers and existing resources; no paid upgrades, overages, domain purchases, or paid CI/build services |
+| Test infrastructure | GitHub Actions standard Linux/macOS runners, PostGIS containers, Jest/Supertest, jest-expo/RNTL, and Maestro | Public repositories, isolated data, zero paid runner/storage budget, and both native platforms |
+| Coverage gates | 80% statements/functions/lines, 75% branches, and 90% branches for critical auth/participation/privacy modules | Required scenarios remain mandatory regardless of percentage; implement gates with the suites |
 
 ## Working assumptions and open decisions
 
@@ -30,15 +33,16 @@ The remaining defaults support planning only. They have not been confirmed.
 | --- | --- | --- |
 | Initial formats | Commander first | Keeps filters and forms small; format storage remains extensible |
 | Authentication implementation details | Libraries, token lifetimes, and account linking rules to be selected | Resend is confirmed for delivery; local identity linking rules remain open |
-| Infrastructure budget | Proposed target 60 to 80 USD/month, review threshold 100 USD | Event-driven delivery avoids recurring notification scans; see the operational proposal and usage assumptions |
 | Retention | Proposed category-specific periods, including 90-day session history and deletion within 30 days | See the operational proposal; durations require confirmation and implementation |
 | Audience | Proposed initial 18+ personal-account audience worldwide | No store accounts; the age policy is a proposal rather than a confirmed restriction |
-| Test infrastructure details | Proposed GitHub Actions standard runners, local PostGIS containers, Maestro, and coverage gates | See the operational proposal for runner allocation, thresholds, costs, and confirmation status |
+| Sending domain | Confirm whether an existing controllable domain is available | Resend Free does not provide a public sending domain; no domain purchase is budgeted |
+| Free delivery and backup feasibility | Validate included Workflow/Queue recovery and a private backup destination | Do not assume paid durable retention or 30-day managed database recovery is included |
 
 ## Questions still open
 
 1. Should the first version focus on Commander or launch with multiple formats?
 2. Which authentication libraries should be used, and how should accounts be linked across sign-in methods?
-3. Which proposed budget, retention, audience, and test infrastructure settings should be adopted from the [operational proposal](./operational-proposal.md)?
+3. Should the proposed retention schedule and 18+ audience in the [operational document](./operational-proposal.md) be adopted?
+4. Is there an existing domain or delegated subdomain we can verify for Resend, and an existing private destination for any supplemental encrypted backups?
 
-The confirmed product decisions and provider choices above can guide implementation. Budget, retention, audience age policy, and detailed test infrastructure remain proposals until accepted. Keep scope, architecture, API, and roadmap aligned as answers arrive.
+Zero infrastructure budget, test infrastructure, and coverage gates are confirmed. Retention, audience age policy, and the remaining service dependencies stay open. Keep scope, architecture, API, and roadmap aligned as answers arrive.
