@@ -7,7 +7,7 @@ Start with a complete flow from current-location discovery to receiving a confir
 ## Confirmed product choices
 
 - Seat requests require host approval.
-- Hosting uses personal accounts only, without store or organization profiles.
+- Hosting uses personal accounts only, aged 18+ by self-declaration, including private homes worldwide; no store or organization profiles.
 - At session creation, the host chooses whether to play or only provide the table. Playing is the default.
 - Authentication uses Google and Apple only. NestJS owns application users, linked provider identities, and sessions; there is no local username/password or sending service.
 - The mobile app targets iOS and Android through Expo.
@@ -15,7 +15,7 @@ Start with a complete flow from current-location discovery to receiving a confir
 - Discovery starts from current device location and shows a city-only list. Approved session detail includes the exact location and map.
 - Hosts can edit all session business fields and their own playing participation. Notifications include an initial in-app snapshot and push-driven UI updates, without polling.
 - NestJS is hosted on Vercel and PostgreSQL/PostGIS on Neon. Email login is a possible future extension if a sending domain and delivery setup are chosen.
-- Infrastructure budget is zero beyond store publication. Use free tiers and existing resources without paid upgrades or overages.
+- Infrastructure budget is zero beyond store publication: Vercel Hobby/Workflow, Neon Free, Expo push, Geoapify Free and MapLibre. Manual encrypted local backups supplement limited included Neon recovery; no paid upgrades or overages.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
 - Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
 
@@ -25,14 +25,16 @@ Start with a complete flow from current-location discovery to receiving a confir
 | --- | --- |
 | [Product scope](./product-scope.md) | Users, screens, session rules, and MVP acceptance criteria |
 | [Architecture](./architecture.md) | Technology choices, repository boundaries, and geolocation design |
-| [Authentication decisions](./authentication-decisions.md) | Social-only scope, separate public identity, and remaining linking, platform, and session choices |
+| [Authentication decisions](./authentication-decisions.md) | Social-only scope, separate public identity, and accepted linking, platform, token and revocation policies |
 | [Data and API](./data-and-api.md) | Entities, endpoints, permissions, and seat allocation |
+| [Delivery and recovery](./delivery-and-recovery.md) | Durable command protocol, crash recovery, push projections and maintenance |
 | [Development roadmap](./development-roadmap.md) | Ordered delivery steps with dependencies and completion checks |
 | [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
 | [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
 | [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
-| [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
-| [Operating constraints](./operational-proposal.md) | Confirmed zero budget and test infrastructure; proposed retention/audience and remaining free-service dependencies |
+| [Open decisions](./open-decisions.md) | Confirmed choices and the sole remaining question: initial formats |
+| [Operating constraints](./operational-proposal.md) | Accepted free-service choices, 18+ audience, retention, and bounded manual backup duties |
+| [Decision audit](./decision-audit.md) | Full documentation review, resolved inconsistencies and remaining implementation gates |
 
 ## Workspace layout
 
@@ -51,7 +53,7 @@ This delivery initializes repositories and records the plan. Framework scaffoldi
 
 ## Initial delivery sequence
 
-1. Resolve remaining product/authentication decisions and review operating constraints for the confirmed Vercel and Neon stack.
+1. Choose only the initial format catalogue; all other MVP policies are accepted. Provision the documented free services and verify their technical acceptance gates.
 2. Scaffold the NestJS and React Native projects and establish local development and CI.
 3. Implement authentication, profiles, venue locations, and session publishing.
 4. Deliver location permission handling and nearby table discovery.

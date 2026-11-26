@@ -13,7 +13,7 @@ The application repositories currently contain planning documentation rather tha
 | API E2E | Complete NestJS application through HTTP | Use real routing, validation, authentication guards, services, and PostgreSQL/PostGIS; assert status, response contract, authorization, and persisted effects |
 | App unit | Pure logic, form rules, and isolated component or hook behavior | Control native dependencies and time; assert user-visible state and accessible interactions |
 | App integration | Screens, navigation, forms, query cache, and API client working together | Use controlled HTTP responses and native adapters; verify request construction, transitions, refresh, and recovery across components |
-| App E2E | Installed app on Android or iOS, connected to the real test API and database | Drive native UI, notification taps, and any retained social callbacks; verify complete user journeys and server-side results |
+| App E2E | Installed app on Android or iOS, connected to the real test API and database | Drive native UI, notification taps, and the accepted native/browser social callbacks; verify complete user journeys and server-side results |
 
 API HTTP E2E tests and mobile E2E tests are separate suites. Rendering a screen against mocked HTTP responses is an app integration test; it does not establish that the installed app works with the backend.
 
@@ -35,8 +35,8 @@ Confirm supported versions during scaffolding and pin dependencies. Use standard
 
 | Scenario | Unit coverage | Integration and API E2E coverage | App E2E acceptance |
 | --- | --- | --- | --- |
-| Authentication | Provider claim, session, identity, and public-name rules | Real signature/issuer/audience/nonce validation, replay rejection, identity uniqueness, throttling, profile creation, returning-login resolution, rotation/reuse, and logout | Google/Apple sign-in and onboarding work through the selected native/browser flows; cancellation, invalid credentials, session expiry, and provider recovery guidance are clear |
-| Identity linking if adopted | Ownership and last-linked-provider rules | Fresh verification links an identity to only its owner; matching emails or display names cannot merge accounts; unlink cannot remove the last usable identity | Linking a second provider accesses the same profile, and losing all providers does not expose a local reset bypass |
+| Authentication | Provider claim, session, identity, and public-name rules | Real signature/issuer/audience/nonce validation, replay rejection, identity uniqueness, throttling, 18+ onboarding, profile creation, returning-login resolution, 15-minute access/30-day inactivity/90-day absolute limits, immediate revocation, rotation/reuse, and logout | Google/Apple sign-in and onboarding work through the selected native/browser flows; cancellation, invalid credentials, session expiry, and provider recovery guidance are clear |
+| Identity linking and unlinking | Ownership and last-linked-provider rules | Fresh verification links an identity to only its owner; matching emails or display names cannot merge accounts; unlink cannot remove the last usable identity and revokes all sessions; cross-account linking and stale proofs fail | Linking a second provider accesses the same profile, and losing all providers does not expose a local reset bypass |
 | Session creation | Time ordering, capacity bounds, host participation default | Omitted or true hostParticipates creates one approved host membership; false creates none; transaction failure leaves no partial session | Publish a four-player table with three available seats by default and four when the host only provides the table |
 | Host permissions | Ownership independent of playing status | Playing and non-playing hosts can manage their own session; another user cannot | A non-playing host publishes, reviews a request, and approves a player |
 | Nearby discovery | Current-position state, filter validation, and city-only display | Real city-centroid PostGIS queries, same-city inclusion, neighboring-city boundaries, date/format filters, and availability | Simulate current device position, find a city-only card, and recover from permission denial using settings/retry |
@@ -44,14 +44,14 @@ Confirm supported versions during scaffolding and pin dependencies. Use standard
 | Final seat | Capacity decision and conflict mapping | Concurrent approvals and a host opting in compete under the same lock; one final seat is allocated once; invalid capacity edits fail atomically | A losing action shows a useful conflict with the response's current state |
 | Location privacy | Host and approved-membership access decisions | Every discovery card and unapproved detail omit venue names and precise fields; use only canonical city data for filtering/ranking; revoke detail access on withdrawal/cancellation/completion | City-only list remains unchanged after approval; authorized detail loads the exact address and map |
 | Session edits | Field validation, host toggles, and version rules | Change venue/time/format with approved players, reject stale edits, free or consume the host seat, keep other session snapshots unchanged, and record notifications atomically | Host edits a published session and opts out; the participant UI applies the newer event while host management remains available |
-| Notifications | Event deduplication, absolute patch application, and version ordering | Durable operation recovery across commit/dispatch crashes, bounded retries, receipt/token handling, and safe recipient payloads | Initial inbox read followed by foreground push updates without another request; duplicate/out-of-order events do not corrupt state; background tap and re-entry recover missed events |
+| Notifications | Event deduplication, absolute patch application, and version ordering | Durable acceptance before mutation, idempotent workflow replays, 202/pending recovery without polling, commit/dispatch crashes, bounded receipt retries, safe workflow history and recipient payloads | Initial inbox read followed by foreground push updates without another request; duplicate/out-of-order events do not corrupt state; background tap and re-entry recover missed events |
 | Leaving and cancellation | Allowed transitions and lifecycle rules | Leaving frees a seat; cancellation blocks requests and approvals, including concurrent actions | Upcoming lists and details reflect withdrawal or cancellation after refresh |
-| Time and lifecycle | UTC conversion boundaries, joining cutoff, and completion | Reject already-started sessions; verify timezone and daylight saving examples; completion is idempotent | Session details display the intended local time and timezone |
+| Time and lifecycle | UTC conversion boundaries, joining cutoff, and completion | Reject already-started sessions; verify timezone and daylight saving examples; completion is idempotent and unrelated aggregate-version changes do not invalidate its completion generation | Session details display the intended local time and timezone |
 | Global geography | Coordinate validation and independence from locale | Cities across hemispheres, high latitudes, and the antimeridian; no country allowlist; exact location never influences public results | Use simulated current-device locations worldwide while host venue creation remains globally available |
 | English and Italian | Translation keys, locale selection/fallback, and formatting | Preferred locale persistence, localized signup/login/recovery messages, stable error codes, and unchanged UTC instants and venue timezones | Run critical registration, hosting, discovery, joining, and error recovery in en and it on Android/iOS; verify text expansion and language switching |
 | Failures and accessibility | Input errors and status presentation | API validation and error contracts; app integration covers offline, timeout, stale cache, and expired session behavior | Essential actions remain understandable with errors, large text, and accessible controls; device permission failures have a recovery path |
 
-Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Product rules that remain open must be resolved before their acceptance tests are finalized.
+Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Only the initial format catalogue remains open; finalize its seeded values before format-specific acceptance fixtures. Other rules use the accepted policies.
 
 ## External services and native sign in
 
@@ -62,6 +62,10 @@ Controlled issuer tests do not verify real provider consent UI. Before release, 
 Any test adapter must use explicit configuration, fail to activate in production, and never provide an auth bypass. Keep credentials outside the repository and redact provider tokens/codes, private addresses, and provider responses from reports and recordings.
 
 For notification automation, inject a synthetic foreground push event at the native adapter boundary and assert cache/inbox updates while an HTTP spy confirms no inbox or session refetch. Simulate duplicate, old, missing, and revoked-access events. A one-shot launch/re-entry snapshot is allowed for recovery; there is no timer-based client or notification-table polling. Device release checks separately exercise real APNs/FCM delivery and background notification taps.
+
+## Retention and zero-cost operations coverage
+
+Add integration/API E2E checks for 7-day exact snapshot/revision purge versus owner-saved venues, 30-day deletion, 90-day history/inbox cleanup, draft expiry, 24-month inactivity plus notice, command/auth deadlines and deletion-ledger replay. Use injected time and bounded maintenance batches. Prove no precise data remains in delivery history and no expired job changes rescheduled sessions. Restore drills, quota/deployment checks, provider registrations and signed device builds are recorded acceptance tasks; they do not become invented passing CI checks.
 
 ## Test data and reproducibility
 
@@ -76,7 +80,7 @@ For notification automation, inject a synthetic foreground push event at the nat
 
 Introduce these scripts during scaffolding; each command must run its named suite independently and return a failing exit code when a test fails.
 
-| Repository | Planned script names | Proposed test locations |
+| Repository | Planned script names | Accepted test locations |
 | --- | --- | --- |
 | API | test:unit, test:integration, test:e2e, test:coverage | Unit specs alongside source; test/integration and test/e2e for database and HTTP suites |
 | App | test:unit, test:integration, test:e2e:android, test:e2e:ios, test:coverage | Unit and integration specs in separate test folders; Maestro flows in .maestro |

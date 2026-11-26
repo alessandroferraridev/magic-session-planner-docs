@@ -1,41 +1,57 @@
-# Authentication decisions and remaining choices
+# Authentication implementation decisions
 
-The MVP supports Google and Apple sign-in only. There is no local username/password registration, password recovery system, email-link login, or email delivery service. NestJS verifies provider credentials, creates or resolves an internal user, and issues the application's own sessions. Email authentication is a future option if a sending domain and delivery setup are chosen later.
+Status: accepted on 26 November 2026. Google and Apple are the only MVP sign-in methods on both iOS and Android. NestJS owns users, linked identities, authorization, and application sessions. There are no local usernames/passwords, magic links, recovery codes, email collection requirement, or email delivery service. Any future email authentication needs a separate scope change.
 
-Public display name is profile data separate from authentication identity. No login username exists in this release. Use an internal UUID and provider issuer/subject identifiers; do not identify or merge accounts by a public name or matching email.
+## Identity and onboarding
 
-## Product decisions still needed
+- Identify users by an internal UUID and a unique verified provider issuer/subject pair. Allow one Google and one Apple identity per user. Never merge by matching email or public name; reject linking an identity already attached to another user with `409 IDENTITY_ALREADY_LINKED`. Account merging and ownership transfers are outside the MVP.
+- Let users choose an editable Unicode display name, 2 to 40 characters after trimming, without uniqueness requirements. Reject control characters. It is public profile data, never a login identifier. Do not persist provider email or avatar metadata in the MVP.
+- First sign-in creates an account transactionally under the identity uniqueness constraint. Require a display name, an explicit 18+ declaration, and acknowledgement of versioned privacy/community policies before enabling discovery or hosting. Store declaration/acknowledgement timestamps and policy version, not date of birth or identity documents. An incomplete account can only finish onboarding, manage its sign-in methods, or delete itself.
+- Explicitly link a second provider from account settings. Require fresh verification of an already linked provider and of the new identity, both within five minutes and bound to the same single-use linking transaction. Lock the user row and enforce identity uniqueness transactionally.
+- Unlink only after fresh verification with the provider that will remain. Never unlink the last identity. Unlinking also revokes the provider grant where supported and removes its stored credential through a retryable protected operation. Unlinking revokes all application sessions, including the current one; sign in again with the remaining provider. Explain this before confirmation. Linking alone does not revoke other devices.
 
-| Decision | Proposed default | What must be settled |
-| --- | --- | --- |
-| Account linking | Allow the user to link Google and Apple explicitly from a signed-in account after fresh provider verification | Confirm linking and unlinking rules; do not merge by matching provider emails or allow removal of the last usable sign-in method |
-| Session policy | Multiple devices, 15-minute application access tokens, rotating refresh sessions with 30-day inactivity expiry | Confirm durations and revocation behavior for logout, provider unlink/revocation, and account deletion |
-| Platform setup | Both confirmed providers on the agreed iOS/Android scope, native SDK where supported and a verified browser flow otherwise | Select app package/bundle identifiers, register provider clients, and validate callback origins and platform support during scaffolding |
+## Platform and library choices
 
-No application email collection is required for login. Persist provider email metadata only if a defined feature needs it; it is not an identity or account-linking key. A future email sign-in method needs a separate decision about domain, verification, linking, and delivery.
+| Concern | Accepted implementation |
+| --- | --- |
+| Google on iOS and Android | `@react-native-google-signin/google-signin` in an Expo native development/release build, using server client configuration and supported code/token verification |
+| Apple on iOS | `expo-apple-authentication`, with a server-issued nonce and server-side token/code verification |
+| Apple on Android | Apple authorization-code browser flow opened with `expo-web-browser`; HTTPS `POST /v1/auth/apple/callback` on the stable API hostname, followed by a verified app return |
+| Server verification | `google-auth-library` for Google; `jose` with Apple's published JWKS for Apple and application JWTs. Exchange codes at provider HTTPS endpoints; verify issuer/audience/signature/expiry/nonce, state, and PKCE where supported |
+| Device secrets | `expo-secure-store` for refresh credentials; access token in memory. No tokens in ordinary query persistence, AsyncStorage, URLs, or logs |
+| Application identifiers | Production bundle/package `com.alessandroferraridev.magicsessionplanner`; staging adds `.staging`. Production scheme `magicsessionplanner`, staging `magicsessionplanner-staging` |
+| Apple service identifiers | Production `com.alessandroferraridev.magicsessionplanner.web`; staging adds `.staging`. Group each service with its environment's primary Apple App ID |
 
-## Proposed technical defaults
+Google requires native configuration/development builds; Apple's Expo SDK is iOS-only. Android browser auth is an explicit requirement. See [Expo Google sign-in](https://docs.expo.dev/guides/google-authentication/), [Expo AppleAuthentication](https://docs.expo.dev/versions/latest/sdk/apple-authentication/), [Apple web configuration](https://developer.apple.com/help/account/capabilities/configure-sign-in-with-apple-for-the-web), and [Apple authorization and app return](https://developer.apple.com/documentation/signinwithapplerestapi/request-an-authorization-to-the-sign-in-with-apple-server).
 
-- Keep an opaque user UUID and editable Unicode display name. Display-name uniqueness is not an authentication requirement; selecting the same name cannot grant access to another account.
-- Verify social issuer, audience, signature, expiry, and transaction nonce/state before resolving an identity. Use provider-supported authorization-code/PKCE flows where applicable, maintained SDKs, and server-side credential verification.
-- Apply shared throttling to social initiation/exchange and refresh endpoints across serverless instances. Reject replayed, expired, wrong-audience, or unverified credentials and redact all credential material.
-- Propose 15-minute access tokens and refresh sessions expiring after 30 days of inactivity. Keep refresh rotation and reuse detection, with logout from one or all devices. These session durations remain proposals.
-- Require fresh provider verification for sensitive identity linking/unlinking. Propose revoking affected sessions on unlink, provider revocation, or account deletion; finalize this policy with the session model.
+Register exact HTTPS callbacks on the assigned staging/production `vercel.app` hostnames; no purchased domain is assumed. Client IDs, Apple Team/Key IDs, signing fingerprints, credentials, and assigned hostnames are provisioning outputs, not product decisions. Registrations do not already exist. Verify both providers on both platforms before completing auth.
 
-Session durations and linking defaults remain recommendations. See [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) and the provider documentation during implementation.
+## Transactions, callbacks, and abuse prevention
 
-## Recovery through identity providers
+Create a random single-use authentication transaction with a ten-minute lifetime, nonce, environment/provider allowlist, and app-generated challenge. Native exchanges/browser returns prove transaction ownership; an intercepted URL scheme alone cannot authenticate. Browser return carries only a one-time opaque completion code, valid 60 seconds and redeemable with the app-held verifier. Provider tokens and application refresh tokens never appear in URLs. Use the system browser and fixed allowlisted return routes.
 
-Users recover access to Google or Apple through that provider's recovery process. If both identities are already linked, either verified identity can access the same application account. An unrelated identity cannot claim an existing account based on a display name, an email string, or a support request.
+Use PostgreSQL-backed atomic throttles shared across serverless instances: start/exchange at most 10 attempts per ten minutes per installation and privacy-preserving IP bucket, refresh at most 60 per minute per auth session, and linking/unlinking/deletion at most five attempts per hour per user. Expire throttle buckets within 24 hours; never log credentials or raw IP/location histories. Return `429` with a bounded retry delay. Recheck current account/session state inside sensitive mutation transactions.
 
-If access to every linked provider is lost, the MVP has no independent local recovery channel. Explain this consequence clearly and encourage linking a second provider if that policy is accepted. Do not implement local passwords, recovery codes, security questions, or email resets as an implicit fallback.
+Follow [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html). Pin supported compatible package versions/lockfiles during scaffolding; reviewed dependency upgrades are maintenance rather than unresolved product choices.
 
-## Mobile callbacks and navigation
+## Application sessions and revocation
 
-Social providers can still need callback or URL-scheme configuration. Choose native SDKs where supported; [Expo Google authentication](https://docs.expo.dev/guides/google-authentication/) requires a native development build, and [Expo AppleAuthentication](https://docs.expo.dev/versions/latest/sdk/apple-authentication/) covers iOS rather than Android. Validate a supported Apple browser flow and safe app return on Android rather than assuming the iOS SDK covers it.
+| Policy | Accepted behavior |
+| --- | --- |
+| Devices | Multiple concurrent devices; settings list sessions and allow current-device/all-device logout |
+| Access token | RS256 JWT, 15-minute lifetime, fixed issuer/audience, `sub`, auth session ID, issued/expiry times and `kid`; reject unexpected algorithms |
+| Refresh token | Random 256-bit opaque secret, SHA-256 hash at rest, atomic single-use rotation; 30-day inactivity expiry and absolute 90-day session lifetime |
+| Reuse detection | Reusing a consumed refresh token revokes its entire auth session/family. Serialize refreshes in-app; after an ambiguous refresh failure, sign in again rather than retry a consumed secret |
+| Immediate enforcement | Every protected API request validates JWT plus current non-revoked session/account in PostgreSQL. Logout/deletion stop existing access tokens immediately; this is request authorization, not notification polling |
+| Sensitive actions | Provider verification within five minutes for linking, unlinking, and account deletion; logout needs no new provider consent |
+| Provider revocation | Verified Apple server notifications, provider invalid-grant responses, and revoked/disabled identities revoke all application sessions when observed. External Google changes are not guaranteed instantly detectable without a provider signal; the absolute session limit still applies |
+| Account deletion | Disable account/sessions immediately, revoke provider grants where supported, cancel active hosted sessions, withdraw active memberships, and apply retention |
+| Signing keys | Rotate every 90 days and on suspected compromise. Keep normal previous verification keys 24 hours; emergency removal immediately invalidates affected tokens. Keys stay deployment secrets |
 
-Push notification taps navigate using a safe session ID and the app's notification response handler, with authorization before loading a precise map. This app navigation is independent of social callback setup. Test the selected social return routes and provider configuration against the no-new-domain budget; a custom purchased domain is not assumed.
+Retain an encrypted provider refresh/revocation credential only where required for provider token revocation, notably Apple account deletion. Keep the encryption key outside PostgreSQL; request no unrelated provider API scopes. Provider credentials are separate from application refresh tokens. Test Apple's revoke flow before launch, including deletion when the app session originated from Google.
 
-## Implementation completion
+## Recovery and completion criteria
 
-Before completing auth, settle linking/unlinking and session rules and obtain the provider client registrations for the selected package/bundle IDs. Implement first-sign-in profile creation, returning social login, explicit identity linking if adopted, token rotation, logout, and deletion/revocation. Test success, cancellation, forged/replayed tokens, identity uniqueness, display-name collisions without identity confusion, throttling, revocation, and cross-account access at unit, integration, and E2E levels.
+Users recover Google/Apple access through that provider. Either already linked identity resolves the same account. If access to every linked provider is lost, there is no independent app recovery or support-based identity reassignment. Explain this and offer linking the second provider in settings.
+
+Auth completion requires working registrations, first/returning sign-in, 18+ onboarding, linking/unlinking, immediate access revocation, rotation/reuse detection, provider grant revocation, and deletion. Unit, integration, HTTP E2E and native E2E cover forged/replayed credentials, expired proofs, cross-account linking, last-provider protection, concurrent refresh, wrong-environment callbacks, and identical display names. Recorded real-provider checks on iOS/Android complement controlled issuer tests. These are implementation tasks; no authentication product decision remains open.

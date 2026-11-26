@@ -10,7 +10,7 @@ Unit tests, integration tests, and E2E tests are mandatory for both API and app 
 | --- | --- |
 | Backend unit tests | Session time validation, allowed lifecycle transitions, host participation default and both creation choices, membership rules, and host authorization independent of playing status |
 | Database integration tests | Apply migrations on a fresh PostgreSQL and PostGIS instance; uniqueness, foreign keys, transaction rollback, locking, and idempotency |
-| Geographic integration tests | Same-city inclusion and neighboring-city radius cases across hemispheres; city centroids, antimeridian and high-latitude cases; exact venue coordinates never affect pre-approval results |
+| Geographic integration tests | Body-based search without logged coordinates; same-city inclusion and neighboring-city radius cases across hemispheres; city centroids, antimeridian and high-latitude cases; exact venue coordinates never affect pre-approval results |
 | Concurrency tests | Multiple approvals compete for one seat; approval races with cancellation, withdrawal, completion, and capacity edits |
 | API E2E tests | Complete NestJS app over HTTP with PostgreSQL/PostGIS: token validation, hidden drafts, field validation, hostParticipates and seat counts, pagination, rate limiting, ownership, and protected location access |
 | Custom authentication tests | Google/Apple claim/signature/nonce validation, replay and identity collisions, shared throttling, safe profile creation/linking, display-name separation, and refresh/session revocation |
@@ -35,8 +35,8 @@ Automated E2E uses the real app, API, and database with controlled external-serv
 - Validate payloads and enforce ownership, bounded search ranges, per-user and per-IP rate limits, and request size limits.
 - Store refresh token hashes, restrict provider credential access, and redact auth payloads. Verify identity ownership before linking; public names and matching emails cannot grant access. No local credential or reset-code store exists.
 - Limit public participant information to display names and approved membership. Pending requests remain visible only to their owner and host.
-- Confirm the proposed retention schedule before the pilot. Deletion processing cancels future hosted sessions, withdraws memberships, revokes access, and purges personal data according to the accepted policy, including backup expiry and restore handling.
-- Restrict operator access, record moderation actions, and define a report response process. The 18+ audience and age declaration are proposals in the operational document, not yet confirmed restrictions.
+- Implement the accepted retention schedule before the pilot. Deletion cancels active hosted sessions, withdraws active memberships, immediately revokes access and purges/anonymizes personal records within 30 days, including backup expiry and deletion-ledger replay on restore.
+- Implement the restricted operator CLI/audit and daily pilot report review with a 72-hour first-response target. Require the accepted 18+ declaration and versioned policy acknowledgement; private homes use the same city-only discovery rules.
 
 ## Performance and operational targets
 
@@ -48,13 +48,13 @@ Inspect query plans to confirm index use and avoid loading all sessions into mem
 
 - Follow the [Git workflow](./git-workflow.md): pull requests for integration, protected `main` and `dev`, a tested release candidate, a version tag, and release or hotfix corrections returned to `dev`.
 - CI passes linting, type checks, required unit, integration, and E2E suites, API contract generation, and build validation for the changed application components.
-- Staging and production use separate credentials and databases, HTTPS, validated environments, and verified included recovery features. Supplemental backups require existing private storage; no paid backup plan is funded.
+- Staging/production use separate Frankfurt resources and credentials, HTTPS and validated environments. Exercise Neon instant restore and weekly/pre-migration encrypted exports to the private operator PC directory, with deletion-ledger replay, maximum 30-day retention and no public CI copies.
 - Migrations are tested from both a fresh database and the previous release. Production schema changes remain compatible with the currently installed app and previous API release.
 - Secrets and privileged provider keys are absent from source control and app bundles.
 - Plans/runners respect zero spending with no paid upgrade, converting trial, or overage fallback. Verify free quotas and social callback setup with available hostnames; no email-sending domain is required.
 - Auth passes provider verification/replay checks, throttling, identity/profile mapping, accepted linking, refresh rotation, and revocation. Validate native and browser callbacks for Google and Apple on the agreed platforms.
-- Database restore and application rollback procedures are exercised; destructive schema rollback uses a documented recovery procedure.
-- Privacy policy, support contact, account deletion route, store location permission text, and privacy declarations match actual behavior.
+- Exercise database restore and app/API rollback, including invalidating restored credentials and applying deletion/retention before reopening traffic. Require a successful encrypted export before production migrations; destructive rollback follows the recovery runbook.
+- Publish bilingual privacy/community/support and deletion-request information on the free docs GitHub Pages site, with a private support contact. Account deletion in-app, store permission text, third-party map processing and privacy declarations match actual behavior.
 - The pilot confirms Google/Apple login, host changes, city-only discovery, approved maps, no-polling push updates, location recovery, capacity races, and API compatibility.
 - Verify English/Italian registration, credential and recovery messages, accessibility, and longer text. Device-position fixtures cover countries, hemispheres, and timezones while discovery stays tied to current position.
 - Individual hosts are responsible for third-party venue bookings; operators can act on reported or unsafe sessions.
