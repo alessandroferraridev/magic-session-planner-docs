@@ -10,7 +10,7 @@ Unit, integration, and E2E tests are required for both API and app. Implement th
 - Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Confirm whether the pilot includes private homes; the pilot must not establish a regional product restriction.
 - Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select libraries and define account linking and session lifetimes. Configure the confirmed Vercel API, Neon PostgreSQL/PostGIS, and Resend email providers; select geocoding and approved-detail map providers.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
-- Apply city-only discovery and approval-gated exact detail/map, current-device discovery origin, and in-app plus push notifications without polling. Review the [operational proposal](./operational-proposal.md) for budget, retention, audience, and test infrastructure; identify an operator contact for reports.
+- Apply city-only discovery, approval-gated precise detail/map, current-device origin, and no-polling push updates. Use the confirmed zero infrastructure budget and accepted test setup; confirm proposed retention and audience, an existing Resend sending domain, free durable-delivery feasibility, and backup arrangements in the [operating constraints](./operational-proposal.md).
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
 
@@ -21,14 +21,14 @@ Repository setup:
 - Work on feature branches derived from the existing protected `dev` branch in each repository.
 - Use the configured pull request rules, merge strategies, and protected release tags. Add actual required CI check names only once those jobs exist, and version API and app releases independently.
 - Configure validated `dev` changes for staging deployment or internal mobile builds, then tagged `main` releases for production delivery or store builds.
-- Establish separate unit, integration, and E2E commands and CI jobs. Provision isolated test databases and Android/iOS test runners; add passing, stable job names to the GitHub rulesets once operational.
+- Establish unit, integration, and E2E commands and CI jobs with the accepted coverage gates and standard GitHub Actions Linux/macOS runners. Use isolated local PostGIS containers and bounded included artifact storage; add actual passing check names to rulesets once operational, without paid runners or builds.
 
 Backend tasks:
 
 - Scaffold NestJS with strict TypeScript, linting, formatting, unit test support, and a supported Node.js version.
 - Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
-- Validate the Vercel runtime, bounded Neon connection pooling, controlled migrations, and separately credentialed staging/production resources. Prototype an event-triggered durable delivery adapter and its database-commit recovery behavior; do not add a notification polling worker.
+- Validate Vercel Hobby, Neon Free/PostGIS, Resend Free, small connection pools, migrations, and isolated staging/production credentials. Verify the event-triggered adapter and commit recovery within included quotas, without polling or paid metering. Resolve the verified email sending domain before public magic-link delivery.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
 - Configure Jest, NestJS TestingModule, PostgreSQL/PostGIS integration fixtures, and a Supertest HTTP E2E suite. Start with meaningful configuration or validation unit checks, migration integration checks, and API readiness over HTTP against the test database.
 

@@ -15,6 +15,7 @@ Start with a complete flow from current-location discovery to receiving a confir
 - Discovery starts from current device location and shows a city-only list. Approved session detail includes the exact location and map.
 - Hosts can edit all session business fields and their own playing participation. Notifications include an initial in-app snapshot and push-driven UI updates, without polling.
 - NestJS is hosted on Vercel, PostgreSQL/PostGIS on Neon, and email delivery on Resend.
+- Infrastructure budget is zero beyond store publication. Use free tiers and existing resources without paid upgrades or overages.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
 - Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
 
@@ -30,7 +31,7 @@ Start with a complete flow from current-location discovery to receiving a confir
 | [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
 | [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
 | [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
-| [Operational proposal](./operational-proposal.md) | Proposed budget, retention periods, audience, and test infrastructure awaiting confirmation |
+| [Operating constraints](./operational-proposal.md) | Confirmed zero budget and test infrastructure; proposed retention/audience and remaining free-service dependencies |
 
 ## Workspace layout
 
