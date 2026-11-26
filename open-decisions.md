@@ -8,8 +8,14 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | --- | --- | --- |
 | Joining policy | Host approval | Players request a seat; only approval confirms participation and occupies a seat |
 | Host participation | Chosen when creating the session; participating is the default | A playing host occupies one seat; a host who only provides the table occupies none and still manages the session |
+| Who can host | Anyone using a personal profile | All profiles represent individuals; organization accounts and store hosting features are outside scope |
+| Session editing | The host can edit all session business fields, including their own participation | Allow venue, time, format, capacity, and participation changes after publication; preserve ownership, valid state, and seat capacity |
+| Discovery origin | Current foreground device position | No manually selected search destination; permission and location failures have explicit recovery states |
+| Location disclosure and map | Discovery list shows only the city; approved participants see the precise location and map in session detail | Protect exact addresses and coordinates on the API; hosts can inspect their own session location |
+| Notifications | In-app and push in the MVP, without polling | Load an initial snapshot; push events update local UI state directly. Persist authoritative events and use event-triggered delivery, with one-shot recovery on app entry |
 | Authentication methods | Email magic link, Google, and Apple | All three sign-in methods are in scope |
 | Authentication ownership | Custom authentication in the NestJS backend | Own application users, identity associations, sessions, and tokens; integrate directly with Google and Apple for social sign-in |
+| Hosting providers | Vercel for NestJS, Neon for PostgreSQL/PostGIS, Resend for email | Use bounded serverless jobs and database connections; separate production and staging resources |
 | Platforms | iOS and Android through Expo | Both platforms are required for development, testing, and distribution |
 | Geographic availability | Worldwide session hosting and discovery | Accept valid locations globally; do not restrict use to a launch country or region |
 | Interface languages | English and Italian | Localize the app and user-facing authentication emails in en and it; language preference is independent of session location |
@@ -22,23 +28,17 @@ The remaining defaults support planning only. They have not been confirmed.
 
 | Decision | Proposed default | Effect on development |
 | --- | --- | --- |
-| Who can host | Players and store representatives | Requires venue ownership and clear store affiliation wording |
-| Private home visibility | Public area before approval; exact address after approval | Requires separate location fields and protected access |
 | Initial formats | Commander first | Keeps filters and forms small; format storage remains extensible |
-| Search experience | List first; map later | Delivers useful discovery before map integration |
-| Discovery origin | Current foreground location or manually selected town | Requires permission handling and geocoding |
-| Notifications | In-app refresh first; push later | Core participation works without notification delivery |
-| Authentication implementation details | Libraries, email delivery, token lifetimes, and account linking rules to be selected | Custom backend ownership is confirmed; implementation choices remain open |
-| Changes to host participation | To be decided | Define whether and how the host can change their playing choice after session creation |
-| Infrastructure budget | To be set | Determines hosting, database, geocoder, and build service choices |
-| Retention and audience | To be set before pilot | Determines deletion jobs, privacy wording, and distribution requirements |
-| Test infrastructure details | Confirm library versions, Android and iOS runners, CI budget, and initial coverage thresholds during scaffolding | Test levels are confirmed; execution infrastructure and numeric coverage gates remain to be selected |
+| Authentication implementation details | Libraries, token lifetimes, and account linking rules to be selected | Resend is confirmed for delivery; local identity linking rules remain open |
+| Infrastructure budget | Proposed target 60 to 80 USD/month, review threshold 100 USD | Event-driven delivery avoids recurring notification scans; see the operational proposal and usage assumptions |
+| Retention | Proposed category-specific periods, including 90-day session history and deletion within 30 days | See the operational proposal; durations require confirmation and implementation |
+| Audience | Proposed initial 18+ personal-account audience worldwide | No store accounts; the age policy is a proposal rather than a confirmed restriction |
+| Test infrastructure details | Proposed GitHub Actions standard runners, local PostGIS containers, Maestro, and coverage gates | See the operational proposal for runner allocation, thresholds, costs, and confirmation status |
 
 ## Questions still open
 
-1. Should players and stores both host, and should private addresses stay hidden until a seat is confirmed?
-2. Should the first version focus on Commander or launch with multiple formats?
-3. Which email delivery service and authentication libraries should be used, and how should accounts be linked across sign-in methods?
-4. Can an existing session's host change between playing and only providing the table?
+1. Should the first version focus on Commander or launch with multiple formats?
+2. Which authentication libraries should be used, and how should accounts be linked across sign-in methods?
+3. Which proposed budget, retention, audience, and test infrastructure settings should be adopted from the [operational proposal](./operational-proposal.md)?
 
-Before implementation, also confirm the available monthly budget and the remaining product defaults above. Global availability and English/Italian interface support are confirmed. Keep the affected scope, architecture, API, and roadmap sections aligned as answers arrive.
+The confirmed product decisions and provider choices above can guide implementation. Budget, retention, audience age policy, and detailed test infrastructure remain proposals until accepted. Keep scope, architecture, API, and roadmap aligned as answers arrive.

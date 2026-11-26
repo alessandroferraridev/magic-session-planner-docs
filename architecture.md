@@ -15,10 +15,14 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
 | Authentication | Custom NestJS authentication with email magic links, Google, and Apple | Backend owns application accounts, sessions, access tokens, and refresh tokens |
+| API hosting | Vercel | NestJS runs as a request-based Vercel Function; scheduled work uses bounded invocations |
+| Managed database | Neon PostgreSQL with PostGIS | Separate production and staging resources and credentials |
+| Email delivery | Resend | English and Italian authentication emails |
+| Push delivery | Expo push service proposed | In-app and push are confirmed; provider choice is an implementation proposal |
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
-| CI and deployment | Provider selected in step 0 | Automated validation and separate staging and production environments |
+| CI | GitHub Actions proposed | Standard runners for unit, integration, and device E2E jobs; details in the operational proposal |
 
-Choose currently supported stable framework versions during scaffolding and commit each lockfile. Do not pin speculative versions in this plan. A map or geocoder provider must be selected before manual town search is implemented, considering worldwide coverage, cost, storage terms, and attribution.
+Choose currently supported stable framework versions during scaffolding and commit each lockfile. Select global geocoding and detail-map providers for venue entry, city resolution, and approved-participant maps, considering coverage, cost, storage terms, and attribution.
 
 ## System boundaries
 
@@ -27,17 +31,17 @@ flowchart LR
     Player[React Native app] -->|Sign in and application bearer token over HTTPS| API[NestJS API and custom authentication]
     Player -->|Social sign in| Social[Google and Apple]
     API -->|Exchange and verify social identity| Social
-    API -->|Deliver magic link| Email[Email delivery service]
-    API --> DB[(PostgreSQL and PostGIS)]
+    API -->|Deliver magic link| Email[Resend]
+    API --> DB[(Neon PostgreSQL and PostGIS)]
     API --> Geo[Geocoding provider]
-    API -. Optional later .-> Push[Push notification provider]
+    API -->|Durable delivery work| Push[Push notification provider]
 ```
 
 The API validates its own application access tokens. Google and Apple credentials are verified during social sign-in, then exchanged for our application session. Cache external public verification keys according to their providers' guidance. Store app tokens in device secure storage and enforce authorization rules on the API.
 
 ## Confirmed authentication methods
 
-Support email magic links, Google sign-in, and Apple sign-in in the Expo app on iOS and Android. The NestJS authentication module owns local users, identity associations, login challenges, and application sessions. Google and Apple remain external identity providers for their respective sign-in methods; email delivery uses a separately selected service or SMTP setup.
+Support email magic links, Google sign-in, and Apple sign-in in the Expo app on iOS and Android. The NestJS authentication module owns local users, identity associations, login challenges, and application sessions. Google and Apple remain external identity providers for their respective sign-in methods; Resend delivers authentication emails.
 
 - Generate cryptographically random magic-link tokens, store only their hashes, enforce expiry, and consume them atomically once. Opening the link must not expose a long-lived application credential in a URL.
 - Integrate Google and Apple using maintained authentication libraries and their supported flows. Validate issuer, audience, signature, expiry, and transaction state or nonce; apply PKCE where the selected authorization-code flow supports it. Keep privileged credentials on the API.
@@ -45,7 +49,7 @@ Support email magic links, Google sign-in, and Apple sign-in in the Expo app on 
 - Rate-limit link requests, token consumption, and refresh operations. Use consistent link-request responses for existing and unknown addresses. Redact credentials from logs and analytics.
 - Handle expired or reused links, cancelled social sign-in, failed callbacks, and revoked sessions in the app before updating signed-in state.
 
-The email delivery service, library choices, token lifetimes, key rotation schedule, and account linking policy remain open. One local user can have multiple authentication identities; attaching an additional identity requires an explicitly defined ownership verification flow. Do not automatically merge accounts based only on matching email addresses while that policy is unresolved.
+Authentication library choices, token lifetimes, key rotation schedule, and account linking policy remain open. One local user can have multiple authentication identities; attaching another identity requires a defined ownership verification flow. Do not automatically merge accounts based only on matching email addresses while that policy is unresolved.
 
 Use established libraries for cryptography and authentication protocols. Backend ownership includes maintaining the authentication implementation and its security tests. Reference the [NestJS authentication documentation](https://docs.nestjs.com/security/authentication), [OWASP email token guidance](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), and [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) during implementation.
 
@@ -54,34 +58,57 @@ Use established libraries for cryptography and authentication protocols. Backend
 - `Auth`: magic-link challenges, Google and Apple integration, identity resolution, application token issuance and verification, refresh rotation, and authentication session revocation.
 - `Users`: display profiles, preferences, and deletion requests.
 - `Venues`: public search locations and protected private addresses.
-- `Sessions`: drafts, the host's playing choice at creation, publishing, editing, cancellation, and lifecycle jobs.
+- `Sessions`: drafts, editable business fields and host participation, versioned updates, publishing, cancellation, and lifecycle jobs.
 - `Participation`: requests requiring host approval, optional approved host membership, withdrawal, and capacity transactions.
 - `Discovery`: geographic filtering, distance sorting, and pagination.
 - `Moderation`: basic reports and operator actions before public launch.
+- `Notifications`: initial inbox snapshot, device tokens, preferences, versioned UI event payloads, event-triggered push dispatch, and receipt handling.
 - `Health`: liveness, readiness, and dependency status.
 
-Controllers validate requests, guards enforce access, and services own business rules. Database transactions span session and participation changes. Start without Redis, microservices, websockets, or a separate message broker. Add a transactional outbox if reliable asynchronous notifications become part of a later release.
+Controllers validate requests, guards enforce access, and services own business rules. Database transactions span session changes, participation, in-app notifications, and delivery event records. Keep the API a modular monolith without self-hosted Redis, microservices, or websockets; validate a durable event-triggered delivery adapter for the MVP notification flow.
+
+## Vercel deployment and scheduled work
+
+Deploy NestJS on Vercel and connect to Neon over TLS with a bounded connection pool. Use a direct migration connection where the selected migration tooling needs one, and execute migrations as a controlled release step rather than on every request. Validate the production PostgreSQL/PostGIS versions and transaction behavior in staging. [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs), [Neon pooling](https://neon.com/docs/connect/connection-pooling), and [Neon PostGIS](https://neon.com/docs/extensions/postgis) guide the setup.
+
+Do not rely on a permanent process or in-memory timer for notification delivery, session completion, or retention cleanup. Notifications are event-triggered: use a durable Vercel workflow or queue adapter with bounded handlers, retry metadata, idempotency keys, and duplicate-safe processing. The delivery adapter remains a proposal to validate during scaffolding. Do not schedule periodic notification-table scans.
+
+Keep the business transaction and durable delivery handoff recoverable. A database commit followed by untracked fire-and-forget sending is insufficient: the proposed durable operation persists its operation ID before the business step, makes the database step idempotent, and retries the later dispatch step after a crash. Validate that recovery contract with the selected SDK before implementation. Session-end tasks are scheduled for the session's version and revalidate that version after time edits; retention cleanup can use a bounded daily maintenance invocation. [Vercel Workflows](https://vercel.com/docs/workflows) and [Queues](https://vercel.com/docs/queues) are implementation candidates.
+
+Use separate Vercel projects for staging and production, with separate Neon projects or equivalently isolated resources and credentials. Staging can use its own production deployment of `dev` to exercise scheduled jobs; preview deployments must not be assumed to run the production schedule. Gate production delivery from `main` on the release process and keep test notifications confined to test accounts. Verify current [scheduler behavior](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs) during implementation.
+
+## Session edits and notifications
+
+All editable session business fields can be changed by the personal-account host, including venue, time, format, capacity, and host participation. Apply the edit under the same session row lock as approvals, check the resulting confirmed count, and increment a version to reject stale concurrent edits. A host opting out withdraws their player membership but retains ownership; opting in approves their membership only if a seat is available.
+
+Create the affected recipients' in-app notifications and delivery event records in that transaction. Use safe versioned payloads containing event and notification IDs, session ID, aggregate version, event type, and a complete small projection of the public status/count/time/city and recipient-membership fields updated by the listener. Increment the aggregate version for every state-changing session or participation operation, not only host edits. Avoid partial patches that lose an earlier field update when a newer event arrives first. Keep payloads within the chosen push provider's size limit and exclude exact addresses, coordinates, credentials, and long user-authored content. Recheck authorization when the user requests protected location detail. Session location snapshots or owned venue revisions keep edits from silently relocating unrelated games.
+
+Proposed events cover requests, approvals, rejections, withdrawals, cancellations, and material session edits. Push dispatch records tickets and receipts, retries transient failures, disables invalid device tokens, and tolerates duplicate delivery. The in-app inbox remains authoritative if push is denied or delayed. Store no exact address in push text. [Expo documents its delivery semantics](https://docs.expo.dev/push-notifications/faq/).
+
+Load the notification inbox and personal-session snapshot once on authenticated app entry. In the foreground, the push listener deduplicates event IDs, rejects older aggregate versions, and patches the query cache and inbox directly; it does not refetch the inbox, session, or database on every push. Mutation responses also update local state. Clear cached exact locations immediately on a revocation or cancellation event, and never grant protected location access from a push alone.
+
+Push delivery is best-effort and background apps may not execute a listener. Use one reconciliation snapshot on launch, login, or foreground re-entry, plus explicit user refresh, to recover missed events. This is event-based recovery, not timed polling. With push disabled, the inbox remains available through those one-shot reads; real-time updates are not promised without a delivery channel. Opening an authorized map or another uncached detail still performs its normal protected API request.
 
 ## Mobile modules
 
 Organize code by authentication, discovery, sessions, hosting, participation, and profile. Keep navigation routes small and place API access, secure token storage, and location services behind shared adapters.
 
-The API is authoritative for capacity and membership. Invalidate session detail, discovery, and personal lists after participation changes. An optimistic UI must never show a confirmed seat before the server approves it. Avoid persistent caching of private venue details; clear sensitive query data when signing out or losing access.
+The API is authoritative for capacity and membership. Apply command responses and received push projections to the cache directly; do not invalidate active queries in a way that causes a read for every push. Load uncached detail on explicit navigation and use one-shot entry/re-entry recovery. An optimistic UI must never show a confirmed seat before server approval. Avoid persistent caching of exact locations and clear sensitive query data when signing out or losing access.
 
 ## Geographic search
 
-Hosting and discovery accept valid locations worldwide. Do not add launch-country allowlists or regional bounding boxes. Let players choose a search destination independently of their device location. A query radius remains local to its chosen point, including when that point is in another country.
+Hosting accepts valid locations worldwide. Discovery uses the current foreground device position wherever the player is, without a manually selected destination or a launch-country allowlist. On permission denial or location failure, expose settings and retry actions while keeping personal session lists available.
 
-Choose global geocoding coverage and support manual venue positioning when an address cannot be resolved. Address input must support international formats without requiring one country's state or postal-code structure. Database hosting regions and capacity remain infrastructure choices; the product's worldwide location support does not require a separate deployment in every region.
+Choose global geocoding coverage and support manual venue positioning during hosting when an address cannot be resolved. Address input supports international formats. The location label before approval is a canonical city, rather than a street, neighborhood, venue name, or host-selected precise point. Worldwide support does not require a deployment in every region.
 
 1. Accept latitude, longitude, radius in kilometers, date range, filters, and pagination. Validate coordinate ranges, cap radius at 100 km, page size at 50, and the search window at 90 days.
-2. Store public discovery positions as PostGIS `geography(Point, 4326)` and create a GiST index. Construct points with longitude first and latitude second.
-3. For public venues, use their published location. For private venues, use the host's selected neighborhood or area centroid as the discovery position; store the exact address and point separately.
-4. Apply `ST_DWithin` to the discovery position using meters, then calculate and sort distance with `ST_Distance`. The radius filter and ordering must use the same public position. Never search against a secret point and merely round its returned distance.
-5. Return rounded approximate distances, public location fields, and current available seats. Filter published future sessions using confirmed participation counts.
+2. Store canonical city centroids as PostGIS `geography(Point, 4326)` with a GiST index. All sessions in one city reference its shared discovery point. Keep exact session coordinates separately protected for every venue type.
+3. Resolve the device's current city. Include eligible sessions in that city and use the radius to include nearby city centroids; this avoids excluding the user's city merely because its center is far away. Geographic ranking is city-level and never based on a secret venue point.
+4. Apply `ST_DWithin` and `ST_Distance` to city discovery points in meters for neighboring-city filtering and ranking. These approximate search semantics need representative large-city and boundary tests; do not filter or sort on exact venue coordinates before approval.
+5. Return city labels and available seats, with no address, venue name, map coordinates, or precise distance. Filter published future sessions using confirmed participation counts.
 6. Begin with bounded offset pagination, defaulting to 20 results. Use stable secondary ordering by start time and session ID; results may move as capacity changes. Revisit cursor pagination after measuring demand.
 
-Private venue search is approximate by design: neighborhood boundaries may affect whether a session appears near the edge of a radius. Show an approximate area label. Expose exact private details through a separate endpoint authorized for the host or an approved player, and revoke access after withdrawal, cancellation, or completion.
+Discovery is city-level and approximate. Both the list and unapproved detail expose only the city, including for public venues. A separate endpoint authorizes the host or an active approved participant to retrieve the exact address and map point in session detail. Revoke participant access after withdrawal, cancellation, or completion. An approved player opening a discovery card still receives a city-only card; precise detail requires the protected request.
 
 Device coordinates are request data for discovery. Do not maintain a history of player movement. Redact location query parameters from API, proxy, analytics, and error logs. Use foreground location on explicit actions; do not enable background tracking.
 

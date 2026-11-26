@@ -6,11 +6,11 @@ Unit, integration, and E2E tests are required for both API and app. Implement th
 
 ## Step 0 Resolve the product decisions
 
-- Use the confirmed host approval policy and host participation choice at creation, defaulting to playing. Confirm who can host, initial formats, and rules for changing the host's playing choice later.
+- Use personal profiles for all hosts, host approval, editable session fields, and host participation that defaults to playing and can be changed later. Confirm the initial formats.
 - Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Confirm whether the pilot includes private homes; the pilot must not establish a regional product restriction.
-- Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select authentication libraries and email delivery, and define account linking and session lifetimes. Select geocoding, API hosting, and managed PostgreSQL providers; verify PostGIS availability and budget.
+- Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select libraries and define account linking and session lifetimes. Configure the confirmed Vercel API, Neon PostgreSQL/PostGIS, and Resend email providers; select geocoding and approved-detail map providers.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
-- Resolve session cancellation, private address disclosure, retention periods, and an operator contact for reports.
+- Apply city-only discovery and approval-gated exact detail/map, current-device discovery origin, and in-app plus push notifications without polling. Review the [operational proposal](./operational-proposal.md) for budget, retention, audience, and test infrastructure; identify an operator contact for reports.
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
 
@@ -28,6 +28,7 @@ Backend tasks:
 - Scaffold NestJS with strict TypeScript, linting, formatting, unit test support, and a supported Node.js version.
 - Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
+- Validate the Vercel runtime, bounded Neon connection pooling, controlled migrations, and separately credentialed staging/production resources. Prototype an event-triggered durable delivery adapter and its database-commit recovery behavior; do not add a notification polling worker.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
 - Configure Jest, NestJS TestingModule, PostgreSQL/PostGIS integration fixtures, and a Supertest HTTP E2E suite. Start with meaningful configuration or validation unit checks, migration integration checks, and API readiness over HTTP against the test database.
 
@@ -66,7 +67,8 @@ Depends on step 2.
 - Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
 - Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
-- Enforce time, capacity, ownership, and venue-edit restrictions on the API.
+- Enforce valid time, capacity, and ownership while allowing host edits with confirmed players present. Add version checks and session-specific location snapshots or venue revisions to prevent silent edits to unrelated games.
+- Implement host participation toggles under the session lock, including the freed-seat result and conflict when opting into a full table.
 - Cover creation rules with unit tests, transactional persistence and API contracts with integration and HTTP E2E tests, and both host participation choices in app integration and native E2E flows.
 
 **Complete when:** a host can publish and manage a session in either playing mode. A four-player table starts with three available seats when the host plays and four otherwise. The second account can see the session but cannot read the exact private address or edit it.
@@ -76,15 +78,15 @@ Depends on step 2.
 Depends on step 3 and geocoder selection.
 
 - Add geographic indexes and parameterized radius, date, format, and available-seat queries.
-- Implement one-time foreground location lookup, permission explanation, and manual town selection.
-- Allow manual search destinations worldwide and verify the selected geocoder across countries. Do not apply a launch-country filter; handle address lookup gaps with manual positioning.
+- Implement one-time current foreground location lookup, permission explanation, settings recovery, and retry. Do not implement a manual discovery destination.
+- Resolve canonical cities worldwide and support host venue positioning separately. Discovery and unapproved detail expose only the city; precise coordinates are not used for pre-approval filtering or ranking.
 - Build the nearby list, filters, pagination, refresh, approximate distance labels, and no-results state.
 - Redact search coordinates from logging at the application and proxy layers.
 - Measure geographic query plans with representative data and verify units and coordinate ordering.
-- Add real PostGIS integration cases, HTTP E2E filters and privacy assertions, app integration state handling, and a native discovery flow including location denial and manual search.
+- Add real PostGIS city-search cases, HTTP E2E privacy assertions for all venue types, app integration state handling, and native location denial/retry coverage.
 - Include both interface locales, multiple hemispheres, high latitudes, and searches across the antimeridian in the relevant automated scenarios.
 
-**Complete when:** test sessions inside and outside a selected radius appear correctly; full and cancelled sessions are excluded; manual search works with GPS disabled; private exact points never affect public radius filtering or ordering.
+**Complete when:** city-based nearby discovery works from the current device location, full and cancelled sessions are excluded, location failures provide recovery, and no exact location leaks through discovery or unapproved detail. Include same-city and large-city boundary cases.
 
 ## Step 5 Request and confirm seats
 
@@ -94,7 +96,10 @@ Depends on step 4.
 - Build request, withdraw, approve, reject, and personal-session screens.
 - Refresh server state after mutations and display useful conflict messages if the last seat is taken.
 - Restrict exact location access to eligible confirmed players and the host.
+- Render the precise location map only in authorized detail after approval and clear cached location on revocation or cancellation.
 - Add the scheduled completion job and cancellation history.
+- Add in-app notifications, push token registration and permission handling, event-triggered delivery, and safe versioned payloads. Fetch an initial snapshot, patch UI directly from received pushes, and reconcile on app entry or explicit refresh without polling or per-push refetches.
+- Cover durable delivery retries and crash recovery, duplicate/out-of-order payloads, push denial, deep-link authorization, and absence of background refresh requests.
 - Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
 
 **Complete when:** two accounts complete discovery through approval; concurrent approval of the last seat admits one player; leaving frees a seat; cancellation or withdrawal revokes private location access.
@@ -105,8 +110,8 @@ Depends on steps 1 through 5.
 
 - Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
 - Add reporting, a minimal operator workflow, account deletion processing, and published privacy and support information.
-- Deploy staging with HTTPS, managed PostGIS, migrations, backup configuration, log redaction, and error monitoring.
-- Build distributable iOS and Android test versions and run an invited pilot with players or stores, covering English and Italian and representative locations and timezones without restricting global hosting.
+- Deploy staging on Vercel with Neon/PostGIS and Resend test recipients; validate migrations, backup recovery, redaction, and event-triggered push delivery.
+- Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 
 **Complete when:** critical defects are resolved, backups can be restored, a rollback is rehearsed, and pilot users can organize sessions without developer intervention.
@@ -120,7 +125,7 @@ Depends on pilot results and launch readiness checks.
 - Require the applicable unit, integration, API HTTP E2E, and Android/iOS E2E gates to pass for the candidate revisions before release promotion.
 - Run migration and API compatibility checks before deploying the production API and distributing the mobile app.
 - Monitor errors, failed join attempts, empty searches, and latency. Investigate reports through the operator process.
-- Prioritize improvements using pilot feedback: push notifications, more formats, maps, recurring sessions, waitlists, chat, store verification, and moderation tools.
+- Prioritize improvements using pilot feedback: more formats, recurring sessions, waitlists, chat, and moderation tools. Precise approved-detail maps and push delivery are already MVP requirements.
 
 **Complete when:** a player can install the app, use English or Italian, discover or host a real session at a chosen location worldwide, and complete the seat request and approval flow, with support and rollback procedures available.
 
@@ -137,4 +142,4 @@ flowchart LR
     Pilot --> Release[7 Release]
 ```
 
-The app can use agreed OpenAPI examples while API features are being implemented. Connect each feature to the staging API before calling it complete. If scope must shrink, postpone maps, push, and additional formats while preserving location privacy and safe seat allocation.
+The app can use agreed OpenAPI examples while API features are implemented. Connect each feature to staging before calling it complete. If scope must shrink, postpone optional capabilities and additional formats while retaining current-location discovery, approval-gated precise maps, in-app/push updates, privacy, and safe seat allocation.

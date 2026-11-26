@@ -2,15 +2,19 @@
 
 Build a mobile application where Magic: The Gathering players worldwide can discover nearby tables, host a session, request a seat, and manage upcoming games. The backend will use NestJS and the mobile app will use React Native.
 
-Start with a complete flow from finding a nearby table to receiving a confirmed seat. Add maps, chat, and advanced store features after that flow works reliably.
+Start with a complete flow from current-location discovery to receiving a confirmed seat, opening the precise location map, and receiving in-app and push updates. Add chat and recurring sessions after that flow works reliably.
 
 ## Confirmed product choices
 
 - Seat requests require host approval.
+- Hosting uses personal accounts only, without store or organization profiles.
 - At session creation, the host chooses whether to play or only provide the table. Playing is the default.
 - Authentication is managed by the NestJS backend, with email magic links, Google, and Apple sign-in. The backend owns application users, sessions, and tokens.
 - The mobile app targets iOS and Android through Expo.
 - Hosting and discovery support locations worldwide. The interface supports English and Italian.
+- Discovery starts from current device location and shows a city-only list. Approved session detail includes the exact location and map.
+- Hosts can edit all session business fields and their own playing participation. Notifications include an initial in-app snapshot and push-driven UI updates, without polling.
+- NestJS is hosted on Vercel, PostgreSQL/PostGIS on Neon, and email delivery on Resend.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
 - Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
 
@@ -26,6 +30,7 @@ Start with a complete flow from finding a nearby table to receiving a confirmed 
 | [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
 | [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
 | [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
+| [Operational proposal](./operational-proposal.md) | Proposed budget, retention periods, audience, and test infrastructure awaiting confirmation |
 
 ## Workspace layout
 
@@ -44,9 +49,9 @@ This delivery initializes repositories and records the plan. Framework scaffoldi
 
 ## Initial delivery sequence
 
-1. Resolve the remaining MVP product decisions, define account linking, and choose email delivery and hosting services.
+1. Resolve remaining product decisions, define account linking, and review the operational proposals for the confirmed Vercel, Neon, and Resend stack.
 2. Scaffold the NestJS and React Native projects and establish local development and CI.
 3. Implement authentication, profiles, venue locations, and session publishing.
 4. Deliver location permission handling and nearby table discovery.
-5. Implement seat requests, host approval, cancellation, and personal session lists.
+5. Implement seat requests, host approval, host edits, personal session lists, and push-driven in-app notifications.
 6. Validate the full flow on real devices, deploy staging, and run a limited pilot.
