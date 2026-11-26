@@ -4,29 +4,11 @@ The critical guarantees are correct nearby results, reliable seat allocation, an
 
 Unit tests, integration tests, and E2E tests are mandatory for both API and app development. Follow the [testing strategy](./testing-strategy.md) for suite boundaries, implementation tools, required scenarios, CI gates, and feature completion criteria. Implement tests alongside each feature, starting during scaffolding.
 
-## Verification matrix
+## Verification evidence
 
-| Layer | Required checks |
-| --- | --- |
-| Backend unit tests | Session time validation, allowed lifecycle transitions, host participation default and both creation choices, membership rules, and host authorization independent of playing status |
-| Database integration tests | Apply migrations on a fresh PostgreSQL and PostGIS instance; uniqueness, foreign keys, transaction rollback, locking, and idempotency |
-| Geographic integration tests | Body-based search without logged coordinates; same-city inclusion and neighboring-city radius cases across hemispheres; city centroids, antimeridian and high-latitude cases; exact venue coordinates never affect pre-approval results |
-| Concurrency tests | Multiple approvals compete for one seat; approval races with cancellation, withdrawal, completion, and capacity edits |
-| API E2E tests | Complete NestJS app over HTTP with PostgreSQL/PostGIS: token validation, hidden drafts, field validation, hostParticipates and seat counts, pagination, rate limiting, ownership, and protected location access |
-| Custom authentication tests | Google/Apple claim/signature/nonce validation, replay and identity collisions, shared throttling, safe profile creation/linking, display-name separation, and refresh/session revocation |
-| Mobile unit tests | Form rules, isolated component and hook behavior, validation errors, and accessible status presentation |
-| Mobile integration tests | Screens, navigation, forms, query cache, and API client together: discovery states, membership status, failed actions, and refresh after a conflict |
-| Session edit tests | Venue/time/format changes with approved players, version conflicts, host opt-out/opt-in, capacity races, unaffected neighboring sessions, and transactional recipient notifications |
-| Notification tests | Initial snapshot, direct push-cache patches, no polling/per-push reads, duplicates/order, crash recovery, denied permission, token invalidation, and authorized navigation from taps |
-| Localization tests | English/Italian completeness, persisted locale, signup/login/recovery messages, locale-aware formatting, and session timezone independence |
-| Device end to end tests | Google/Apple onboarding and returning sign-in on agreed platforms; cancellation and callbacks; two-account approval/map; host editing; current location recovery; push/cache and re-entry |
-| Accessibility checks | Screen reader labels, focus after errors, large text, touch targets, and status communicated beyond color |
+[Testing strategy](./testing-strategy.md) owns the verification matrix, mandatory scenarios, tools, runners, coverage and CI gates. Release evidence identifies tested app/API revisions, passing required suites and recorded real-provider/device smoke checks. Optional Postman CLI smoke collections supplement those suites.
 
-Run geographic tests against PostgreSQL with PostGIS, not an SQLite substitute. Include a malicious request that tries to approve another host's applicant and discovery response assertions that reject any exact private location fields.
-
-The accepted tools are Jest and NestJS TestingModule for backend unit/integration, Supertest for API HTTP E2E, Jest with jest-expo and React Native Testing Library for app unit/integration, and Maestro for native E2E. Use standard GitHub Actions Linux/macOS runners for the public repositories and included storage only. Confirm compatible versions during scaffolding and implement the accepted coverage gates from the testing strategy. Postman CLI can supplement the primary suites with an optional deployed smoke collection. Use isolated fixtures and credentials with no secrets committed.
-
-Automated E2E uses the real app, API, and database with controlled external-service boundaries. Real Google and Apple sign-in and device permission behavior also need recorded release smoke checks, as described in the testing strategy.
+Before release verify screen-reader labels, focus after errors, large text, touch targets and status conveyed beyond color. Geographic tests use real PostgreSQL/PostGIS; cross-account authorization and city-only response assertions remain mandatory. External boundaries are controlled in automation; real Google/Apple consent and APNs/FCM delivery are checked on devices.
 
 ## Privacy and abuse controls
 

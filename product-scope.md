@@ -2,7 +2,13 @@
 
 The first release helps individuals arrange an in-person Magic: The Gathering game anywhere in the world, with nearby discovery around the device's current location. A table represents one scheduled session with a fixed player capacity, hosted by a person.
 
-## Confirmed MVP decisions
+## Audience and hosting
+
+Personal-account Magic players aged 18+ worldwide. Require self-declaration and versioned policy acknowledgement, not birth dates or IDs; this is not verified age. Private homes are supported in the pilot/MVP with city-only discovery and approval-gated precise detail. The MVP is free to use and personal/non-commercial, with no store profiles, payments, advertisements, tournament brackets, paid features or child-directed flows.
+
+Everyone who completes the required personal-profile onboarding can host. Venue categories describe public spaces or private homes; neither category discloses an exact location before approval. Provide in-app reporting and account deletion. Operator response duties and support contacts are defined in [Operations](./operations.md#moderation-and-support-operations).
+
+## MVP requirements
 
 - A host approves seat requests. Pending requests do not reserve seats.
 - Anyone with a personal profile can host. Profiles represent individuals; store or organization accounts and business hosting features are outside scope.
@@ -16,12 +22,12 @@ The first release helps individuals arrange an in-person Magic: The Gathering ga
 - The interface supports English and Italian. Language selection is independent of where a session is hosted.
 - API and app development must include unit, integration, and E2E tests, implemented alongside their features from the initial scaffold. See the [testing strategy](./testing-strategy.md).
 
-## Additional accepted scope and initial formats
+## Scope boundaries and initial formats
 
-All scope below is accepted except the initial format catalogue, the only [open decision](./open-decisions.md).
+The only [open decision](./open-decisions.md) is the initial format catalogue. Authentication implementation is defined in [Authentication](./authentication.md); infrastructure and retention are defined in [Operations](./operations.md).
 
 - Initial formats remain undecided: Commander only or an explicit multi-format catalogue. Store formats as stable extensible catalogue codes; examples do not select launch formats.
-- The app uses foreground location only. The audience is 18+ worldwide by self-declaration; private-home sessions are included. Launch is personal/non-commercial and free to use, without paid features or advertising.
+- The app uses foreground location only.
 - Account access is required to browse and participate. Payments, chat, competitive matchmaking, deck management, ratings, and tournament brackets are outside the MVP.
 
 ## Global availability and interface languages

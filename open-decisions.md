@@ -6,4 +6,4 @@ Choose whether the first version supports **Commander only** or an explicit cata
 
 This determines the initial seeded catalogue, host form choices and discovery filters. Commander remains a candidate, not a confirmed launch restriction.
 
-All other choices are recorded in [Confirmed decisions](./confirmed-decisions.md).
+Product requirements are in [Product scope](./product-scope.md). The [documentation index](./README.md#documentation-by-topic) links the dedicated specifications for authentication, architecture, data, notifications, operations, tests and Git.

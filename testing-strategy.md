@@ -31,6 +31,8 @@ The API repository owns API unit, integration, and HTTP E2E suites. The app repo
 
 Confirm supported versions during scaffolding and pin dependencies. Use standard GitHub Actions Linux runners for API and Android work and standard macOS/Xcode runners for iOS, as accepted by the product owner. The public repositories enable the standard free compute model; paid runners, storage overages, and paid EAS builds are outside the zero infrastructure budget. The Windows development machine is not an iOS simulator runner.
 
+Standard runner compute is free for the public repositories under [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions). Keep all three repositories public for this model, cancel superseded runs, use included artifact storage only and never expose production credentials to fork PRs. Small trusted Vercel/Neon staging smoke checks verify deployment compatibility; controlled issuer and APNs/FCM device release checks retain the boundaries described below. Real required status names are added to rulesets only after working jobs exist.
+
 ## Required scenario coverage
 
 | Scenario | Unit coverage | Integration and API E2E coverage | App E2E acceptance |
@@ -51,7 +53,7 @@ Confirm supported versions during scaffolding and pin dependencies. Use standard
 | English and Italian | Translation keys, locale selection/fallback, and formatting | Preferred locale persistence, localized signup/login/recovery messages, stable error codes, and unchanged UTC instants and venue timezones | Run critical registration, hosting, discovery, joining, and error recovery in en and it on Android/iOS; verify text expansion and language switching |
 | Failures and accessibility | Input errors and status presentation | API validation and error contracts; app integration covers offline, timeout, stale cache, and expired session behavior | Essential actions remain understandable with errors, large text, and accessible controls; device permission failures have a recovery path |
 
-Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Only the initial format catalogue remains open; finalize its seeded values before format-specific acceptance fixtures. Other rules use the accepted policies.
+API E2E also covers hidden drafts, DTO whitelisting, bounded pagination, request throttling, and an attempt to approve another host's applicant. Verify body-based discovery/address lookup never logs sensitive input. Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Only the initial format catalogue remains open; finalize its seeded values before format-specific acceptance fixtures. Other rules use the accepted policies.
 
 ## External services and native sign in
 
@@ -73,7 +75,7 @@ Add integration/API E2E checks for 7-day exact snapshot/revision purge versus ow
 - Verify migration installation from empty and upgrade from the previous supported schema. Use a clean fixture baseline for each test group and clean up on both success and failure.
 - Validate the test environment and database destination before destructive fixture reset. Never reset production or a shared staging database.
 - Freeze or inject time where appropriate, use known coordinates across hemispheres and the antimeridian, and include timezone and daylight saving examples. Exercise en and it without changing the same session's UTC instants or venue timezone. Avoid arbitrary sleeps and synchronize competing transactions so they actually overlap.
-- Use independent connections for locking tests. Assert both operation results and final persisted state after all competing operations finish.
+- Use independent connections for locking tests. Race approval against cancellation, withdrawal, completion and capacity edits, as well as other approvals/host opt-in. Assert both operation results and final persisted state after all competing operations finish.
 - Keep tests independent of execution order. Reset app secure storage, permissions, and query state between device scenarios; preserve backend data only for explicit multi-account journeys.
 
 ## Planned suite commands and layout
@@ -98,7 +100,7 @@ Document environment setup, database lifecycle, native build prerequisites, and 
 
 Document-only changes use document checks instead of launching application suites. Keep relevant gate jobs present on every matching PR so conditional execution does not leave a required status pending. Promote a release only after the suites applicable to the changed components pass for the tested revisions; manual smoke checks supplement automated E2E rather than replacing them.
 
-Publish sanitized reports and bounded failure diagnostics within included storage, retaining them for at most seven days and shorter when quota requires it. Accepted gates are 80% statements/functions/lines and 75% branches for owned logic, and 90% branches for authentication, capacity/participation, and location authorization once those modules exist. Generated clients and declarations may be excluded explicitly; business modules may not. The [operational document](./operational-proposal.md) records accepted runner and budget constraints. Critical scenarios remain mandatory independently of percentages.
+Publish sanitized reports and bounded failure diagnostics within included storage, retaining them for at most seven days and shorter when quota requires it. Accepted gates are 80% statements/functions/lines and 75% branches for owned logic, and 90% branches for authentication, capacity/participation, and location authorization once those modules exist. Generated clients and declarations may be excluded explicitly; business modules may not. [Operations](./operations.md) defines the zero-spending policy; runner and suite requirements are owned by this testing strategy. Critical scenarios remain mandatory independently of percentages.
 
 Failed required tests block integration or release. Retain failure evidence when rerunning a flaky test; address the cause rather than treating repeated retries as a passing result. A missing required critical scenario remains unfinished work.
 

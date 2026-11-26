@@ -1,4 +1,4 @@
-# Authentication implementation decisions
+# Authentication
 
 Status: accepted on 26 November 2026. Google and Apple are the only MVP sign-in methods on both iOS and Android. NestJS owns users, linked identities, authorization, and application sessions. There are no local usernames/passwords, magic links, recovery codes, email collection requirement, or email delivery service. Any future email authentication needs a separate scope change.
 
@@ -30,7 +30,7 @@ Register exact HTTPS callbacks on the assigned staging/production `vercel.app` h
 
 Create a random single-use authentication transaction with a ten-minute lifetime, nonce, environment/provider allowlist, and app-generated challenge. Native exchanges/browser returns prove transaction ownership; an intercepted URL scheme alone cannot authenticate. Browser return carries only a one-time opaque completion code, valid 60 seconds and redeemable with the app-held verifier. Provider tokens and application refresh tokens never appear in URLs. Use the system browser and fixed allowlisted return routes.
 
-Use PostgreSQL-backed atomic throttles shared across serverless instances: start/exchange at most 10 attempts per ten minutes per installation and privacy-preserving IP bucket, refresh at most 60 per minute per auth session, and linking/unlinking/deletion at most five attempts per hour per user. Expire throttle buckets within 24 hours; never log credentials or raw IP/location histories. Return `429` with a bounded retry delay. Recheck current account/session state inside sensitive mutation transactions.
+Cache provider public verification keys according to provider cache/rotation guidance; never accept an unknown key without verified refresh. Use PostgreSQL-backed atomic throttles shared across serverless instances: start/exchange at most 10 attempts per ten minutes per installation and privacy-preserving IP bucket, refresh at most 60 per minute per auth session, and linking/unlinking/deletion at most five attempts per hour per user. Expire throttle buckets within 24 hours; never log credentials or raw IP/location histories. Return `429` with a bounded retry delay. Recheck current account/session state inside sensitive mutation transactions.
 
 Follow [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html). Pin supported compatible package versions/lockfiles during scaffolding; reviewed dependency upgrades are maintenance rather than unresolved product choices.
 
@@ -55,3 +55,4 @@ Retain an encrypted provider refresh/revocation credential only where required f
 Users recover Google/Apple access through that provider. Either already linked identity resolves the same account. If access to every linked provider is lost, there is no independent app recovery or support-based identity reassignment. Explain this and offer linking the second provider in settings.
 
 Auth completion requires working registrations, first/returning sign-in, 18+ onboarding, linking/unlinking, immediate access revocation, rotation/reuse detection, provider grant revocation, and deletion. Unit, integration, HTTP E2E and native E2E cover forged/replayed credentials, expired proofs, cross-account linking, last-provider protection, concurrent refresh, wrong-environment callbacks, and identical display names. Recorded real-provider checks on iOS/Android complement controlled issuer tests. These are implementation tasks; no authentication product decision remains open.
+The API integration follows [NestJS authentication](https://docs.nestjs.com/security/authentication). Retention and credential cleanup are specified in [Operations](./operations.md#retention-schedule); test suites and release scenarios are specified in [Testing strategy](./testing-strategy.md).
