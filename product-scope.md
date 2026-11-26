@@ -7,7 +7,7 @@ The first release helps individuals arrange an in-person Magic: The Gathering ga
 - A host approves seat requests. Pending requests do not reserve seats.
 - Anyone with a personal profile can host. Profiles represent individuals; store or organization accounts and business hosting features are outside scope.
 - At creation, the host chooses whether to play or only provide the table. Playing is selected by default. A playing host occupies one seat; a host who only provides the table occupies none. A four-player session therefore begins with three or four available seats respectively.
-- The NestJS backend manages authentication through email magic links, Google, and Apple sign-in. It owns application accounts and sessions; email delivery and account linking details remain open.
+- NestJS manages username/password signup and login with no sending service or email-link route. Previously scoped Google/Apple login remains pending final social/callback decisions; recovery and linking policies are still open.
 - The app targets iOS and Android through Expo.
 - Session hosting and discovery are available globally, without a launch-country or region restriction.
 - Nearby discovery uses the current device position. The discovery list and unapproved session detail expose only the city; an approved participant sees the exact location and map in session detail. Hosts can inspect their own exact locations.
@@ -28,7 +28,7 @@ These are proposed defaults until the questions in [Open decisions](./open-decis
 
 Hosts can create a session at any valid location worldwide. Players discover sessions around their current device position wherever they are. This does not introduce a manually selected search destination or a country restriction. Venue positioning during hosting is a separate action from choosing the discovery origin.
 
-Provide English and Italian translations for navigation, forms, validation, empty and error states, and user-facing authentication emails. Session titles, descriptions, and venue names remain user content without automatic translation. A session's play language is separate metadata from the interface language.
+Provide English and Italian translations for navigation, registration/login, validation, empty and error states, and the accepted recovery flow. Session titles, descriptions, and venue names remain user content without automatic translation. A session's play language is separate metadata from the interface language.
 
 Use the venue's IANA timezone to interpret and display session time, retaining UTC instants for storage. Choosing English or Italian does not change a session's location or timezone. An invited pilot is a validation exercise and does not define a geographic restriction for the product.
 
@@ -79,21 +79,21 @@ The app loads an initial notification and personal-session snapshot. Push listen
 
 ## Required mobile screens
 
-1. Sign in through email magic link, Google, or Apple, including authentication return and error states.
+1. Register and sign in with username/password, plus the social methods retained after the auth decisions, with credential and callback error states as applicable.
 2. Current location explanation, permission handling, settings recovery, and retry.
 3. Nearby session list and filters.
 4. Session detail and participation state, including protected precise location and map after approval.
 5. Create and edit all session business fields, including a city-only preview and editable host participation.
 6. Hosted sessions and request management.
 7. My upcoming sessions, profile, privacy preferences, and account deletion request.
-8. In-app notifications, push permission and preferences, and notification deep links.
+8. In-app notifications, push permission/preferences, and authorized navigation from notification taps using session identifiers.
 
 ## MVP acceptance criteria
 
 - A player can discover a published session within a selected area, request a seat, and see its approval from a second account.
 - A host can publish and cancel a session, approve requests, and inspect the current confirmed player count.
 - Creating a four-player session with the default playing host leaves three available seats; choosing only to provide the table leaves four. The host can manage the session in both cases.
-- Players can sign in through each of the three methods on iOS and Android development builds; the authentication flow returns to the app and handles failure clearly.
+- Players can register/login with username/password on iOS and Android, change credentials securely, and use the accepted recovery behavior. Retained social flows must work on their agreed platforms with validated callbacks where needed.
 - A full, cancelled, completed, or already-started session cannot accept new participants.
 - Concurrent approvals for the final seat result in exactly one successful approval.
 - Location denial explains how to enable location and retry; nearby search never silently uses a default or manually selected destination.
@@ -102,5 +102,5 @@ The app loads an initial notification and personal-session snapshot. Push listen
 - Hosts can publish worldwide and players can discover sessions using simulated current-device positions in different countries and hemispheres.
 - A host can change venue, format, time, and participation with confirmed players present; capacity stays valid and affected players receive an in-app notification with push delivery attempted.
 - In-app notifications survive push denial, duplicates, and transient delivery errors; push content does not disclose the session's exact location.
-- Critical flows, validation and error states, and authentication emails are available in both English and Italian, with session timezones preserved when changing language.
+- Critical flows and validation, credential, and recovery error states are available in English and Italian, with session timezones preserved when changing language.
 - Automated unit, integration, and E2E suites cover the applicable critical scenarios in the testing strategy and pass for the release candidate, including Android and iOS app journeys. Recorded real-provider and device smoke checks complement those suites.

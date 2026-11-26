@@ -14,10 +14,9 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | API contract | NestJS OpenAPI generation | Documented endpoints and generated mobile client types |
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
-| Authentication | Custom NestJS authentication with email magic links, Google, and Apple | Backend owns application accounts, sessions, access tokens, and refresh tokens |
+| Authentication | Custom NestJS username/password authentication and previously scoped Google/Apple login | Backend owns credentials, accounts, sessions, and tokens; recovery/social scope is still to be finalized |
 | API hosting | Vercel | NestJS runs as a request-based Vercel Function; scheduled work uses bounded invocations |
 | Managed database | Neon PostgreSQL with PostGIS | Separate production and staging resources and credentials |
-| Email delivery | Resend | English and Italian authentication emails |
 | Push delivery | Expo push service proposed | In-app and push are confirmed; provider choice is an implementation proposal |
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
 | CI | GitHub Actions standard runners, confirmed | Linux for API/Android and macOS for iOS; public repositories and included storage only |
@@ -31,7 +30,6 @@ flowchart LR
     Player[React Native app] -->|Sign in and application bearer token over HTTPS| API[NestJS API and custom authentication]
     Player -->|Social sign in| Social[Google and Apple]
     API -->|Exchange and verify social identity| Social
-    API -->|Deliver magic link| Email[Resend]
     API --> DB[(Neon PostgreSQL and PostGIS)]
     API --> Geo[Geocoding provider]
     API -->|Durable delivery work| Push[Push notification provider]
@@ -41,21 +39,21 @@ The API validates its own application access tokens. Google and Apple credential
 
 ## Confirmed authentication methods
 
-Support email magic links, Google sign-in, and Apple sign-in in the Expo app on iOS and Android. The NestJS authentication module owns local users, identity associations, login challenges, and application sessions. Google and Apple remain external identity providers for their respective sign-in methods; Resend delivers authentication emails.
+Support local username/password signup and login through HTTPS, with no sending service or email app-return route. Google and Apple remain in the previously confirmed scope, with their final platform/callback design to be resolved. NestJS owns local credentials, users, external identity associations, and application sessions. See [Authentication decisions](./authentication-decisions.md).
 
-- Generate cryptographically random magic-link tokens, store only their hashes, enforce expiry, and consume them atomically once. Opening the link must not expose a long-lived application credential in a URL.
+- Hash passwords with a maintained Argon2id implementation and unique salts. Benchmark the selected current OWASP work factors in the Vercel runtime, and implement shared throttling, generic failed-login errors, safe credential changes, and the agreed recovery policy.
 - Integrate Google and Apple using maintained authentication libraries and their supported flows. Validate issuer, audience, signature, expiry, and transaction state or nonce; apply PKCE where the selected authorization-code flow supports it. Keep privileged credentials on the API.
 - Issue short-lived application access tokens and rotating refresh tokens linked to a server-side authentication session. Store refresh token hashes, track rotation and reuse, and support revocation and logout from one or all devices.
-- Rate-limit link requests, token consumption, and refresh operations. Use consistent link-request responses for existing and unknown addresses. Redact credentials from logs and analytics.
-- Handle expired or reused links, cancelled social sign-in, failed callbacks, and revoked sessions in the app before updating signed-in state.
+- Rate-limit signup, login, recovery if enabled, and refresh operations. Redact passwords, hashes, recovery codes, and tokens from logs and analytics.
+- Handle wrong credentials, unavailable or throttled login, cancelled social sign-in, failed callbacks, and revoked sessions before updating signed-in state. Local login itself needs no deep link; retained social flows may still need platform callbacks or URL schemes.
 
 Authentication library choices, token lifetimes, key rotation schedule, and account linking policy remain open. One local user can have multiple authentication identities; attaching another identity requires a defined ownership verification flow. Do not automatically merge accounts based only on matching email addresses while that policy is unresolved.
 
-Use established libraries for cryptography and authentication protocols. Backend ownership includes maintaining the authentication implementation and its security tests. Reference the [NestJS authentication documentation](https://docs.nestjs.com/security/authentication), [OWASP email token guidance](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), and [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) during implementation.
+Use established libraries for cryptography and authentication protocols. Backend ownership includes maintenance and security tests. Reference [NestJS authentication](https://docs.nestjs.com/security/authentication), [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), and [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) during implementation.
 
 ## Backend modules
 
-- `Auth`: magic-link challenges, Google and Apple integration, identity resolution, application token issuance and verification, refresh rotation, and authentication session revocation.
+- `Auth`: username/password credentials, retained social identity integration, approved recovery behavior, token issuance/verification, refresh rotation, and session revocation.
 - `Users`: display profiles, preferences, and deletion requests.
 - `Venues`: public search locations and protected private addresses.
 - `Sessions`: drafts, editable business fields and host participation, versioned updates, publishing, cancellation, and lifecycle jobs.
@@ -71,7 +69,7 @@ Controllers validate requests, guards enforce access, and services own business 
 
 Deploy NestJS on Vercel and connect to Neon over TLS with a bounded connection pool. Use a direct migration connection where the selected migration tooling needs one, and execute migrations as a controlled release step rather than on every request. Validate the production PostgreSQL/PostGIS versions and transaction behavior in staging. [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs), [Neon pooling](https://neon.com/docs/connect/connection-pooling), and [Neon PostGIS](https://neon.com/docs/extensions/postgis) guide the setup.
 
-The accepted budget permits Vercel Hobby, Neon Free, and Resend Free only, with included service resources and no paid fallback. Validate Vercel's personal/non-commercial eligibility, free compute/storage/transfer quotas, and the durable adapter's no-charge behavior. A free plan can suspend service at its limits; global geographic support is not a promise of unlimited free capacity. Resend public email delivery also depends on an existing verified domain, whose availability is unresolved. See the [operating constraints](./operational-proposal.md).
+The accepted budget permits Vercel Hobby and Neon Free with included service resources and no paid fallback. Validate Hobby eligibility, free quotas, and the durable adapter's no-charge behavior. Quota exhaustion can suspend service; global geographic support is not unlimited free capacity. Local signup/login has no email service or sending-domain dependency. See the [operating constraints](./operational-proposal.md).
 
 Do not rely on a permanent process or in-memory timer for notification delivery, session completion, or retention cleanup. Notifications are event-triggered: use a durable Vercel workflow or queue adapter with bounded handlers, retry metadata, idempotency keys, and duplicate-safe processing. The delivery adapter remains a proposal to validate during scaffolding. Do not schedule periodic notification-table scans.
 
@@ -116,11 +114,11 @@ Device coordinates are request data for discovery. Do not maintain a history of 
 
 ## English and Italian localization
 
-Keep English and Italian translation catalogs, identified by `en` and `it`, for interface text, validation and recovery messages, and authentication email templates. Store the user's preferred interface locale separately from a session's play language and timezone. User-authored titles, descriptions, and venue names are preserved as entered.
+Keep English and Italian translation catalogs, identified by `en` and `it`, for interface text, validation, and recovery messages. Store preferred interface locale separately from a session's play language and timezone. User-authored titles, descriptions, and venue names are preserved as entered.
 
 The proposed initial selection uses the device language when supported, otherwise English, with an explicit language setting that persists for the user. Format dates, times, numbers, and plurals for the selected locale. Keep session time interpretation tied to the venue's IANA timezone and UTC storage, independently of the interface language or device timezone.
 
-Return stable machine-readable API error codes for the app to localize. Carry an explicit supported locale for pre-login magic-link requests so email templates use the chosen language. Verify complete translation keys and text expansion on both mobile platforms during testing.
+Return stable machine-readable API error codes for the app to localize. Verify complete translation keys and text expansion on both platforms, including registration, login, credential errors, and the accepted recovery flow.
 
 ## Repository responsibilities
 
@@ -130,4 +128,4 @@ Publish a versioned OpenAPI artifact from backend CI, then update the app client
 
 Use the [Git workflow](./git-workflow.md) in all three repositories. Validated `dev` changes feed staging; tagged releases on `main` identify production API artifacts and mobile release builds. API and app versions advance independently and must remain compatible with installed app versions.
 
-Secrets belong in deployment secret stores or local ignored environment files. The app may contain the public API base URL and public OAuth client identifiers, but it must never contain database credentials, token-signing keys, OAuth client secrets, Apple signing credentials, or email service credentials.
+Secrets belong in deployment secret stores or local ignored environment files. The app may contain the public API base URL and public OAuth client identifiers, but it must never contain database credentials, token-signing keys, OAuth client secrets, or Apple signing credentials.
