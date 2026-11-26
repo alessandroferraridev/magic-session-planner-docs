@@ -32,7 +32,8 @@ Start with a complete flow from current-location discovery to receiving a confir
 | [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
 | [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
 | [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
-| [Open decisions](./open-decisions.md) | Confirmed choices and the sole remaining question: initial formats |
+| [Confirmed decisions](./confirmed-decisions.md) | Accepted product, authentication, infrastructure and operational choices |
+| [Open decisions](./open-decisions.md) | Only the initial format catalogue remains to be chosen |
 | [Operating constraints](./operational-proposal.md) | Accepted free-service choices, 18+ audience, retention, and bounded manual backup duties |
 | [Decision audit](./decision-audit.md) | Full documentation review, resolved inconsistencies and remaining implementation gates |
 
