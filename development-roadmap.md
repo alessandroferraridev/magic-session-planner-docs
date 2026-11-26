@@ -8,9 +8,9 @@ Unit, integration, and E2E tests are required for both API and app. Implement th
 
 - Use personal profiles for all hosts, host approval, editable session fields, and host participation that defaults to playing and can be changed later. Confirm the initial formats.
 - Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Confirm whether the pilot includes private homes; the pilot must not establish a regional product restriction.
-- Use custom NestJS authentication for email magic link, Google, and Apple sign-in. Select libraries and define account linking and session lifetimes. Configure the confirmed Vercel API, Neon PostgreSQL/PostGIS, and Resend email providers; select geocoding and approved-detail map providers.
+- Use Google/Apple-only sign-in with NestJS-issued application sessions and a separate public profile name. Finalize linking/unlinking, session rules, provider registrations, and native/browser callbacks. Configure Vercel and Neon/PostGIS; select geocoding and detail-map providers.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
-- Apply city-only discovery, approval-gated precise detail/map, current-device origin, and no-polling push updates. Use the confirmed zero infrastructure budget and accepted test setup; confirm proposed retention and audience, an existing Resend sending domain, free durable-delivery feasibility, and backup arrangements in the [operating constraints](./operational-proposal.md).
+- Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; confirm retention, audience, durable delivery, and backups in the [operating constraints](./operational-proposal.md). No email sender or local credentials are required.
 
 **Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
 
@@ -28,7 +28,7 @@ Backend tasks:
 - Scaffold NestJS with strict TypeScript, linting, formatting, unit test support, and a supported Node.js version.
 - Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
-- Validate Vercel Hobby, Neon Free/PostGIS, Resend Free, small connection pools, migrations, and isolated staging/production credentials. Verify the event-triggered adapter and commit recovery within included quotas, without polling or paid metering. Resolve the verified email sending domain before public magic-link delivery.
+- Validate Vercel Hobby, Neon Free/PostGIS, small pools, migrations, isolated environments, and provider callback configuration. Verify durable event delivery/commit recovery within free quotas without polling or paid metering.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
 - Configure Jest, NestJS TestingModule, PostgreSQL/PostGIS integration fixtures, and a Supertest HTTP E2E suite. Start with meaningful configuration or validation unit checks, migration integration checks, and API readiness over HTTP against the test database.
 
@@ -45,17 +45,17 @@ App tasks:
 
 ## Step 2 Add identity and profiles
 
-Depends on step 1, authentication library selection, email delivery setup, and Google and Apple application registration.
+Depends on step 1, compatible social SDKs, linking/session policy, provider registration, and platform callback configuration.
 
-- Implement email magic link, Google, and Apple sign-in, app return routing, logout, token expiry, and secure token storage on iOS and Android.
-- Localize authentication screens and email templates in English and Italian, including failures and expired-link recovery.
-- Add local authentication identity, magic-link challenge, authentication session, and refresh token migrations. Implement single-use challenge consumption, application token issuance, refresh rotation and reuse detection, and device or global logout.
-- Handle expired and reused magic links, resend requests, cancelled social sign-in, and failed callbacks. Define and implement account linking only after its policy is decided.
+- Implement Google and Apple through native SDKs or validated browser flows for each platform; first verified sign-in creates the internal profile.
+- Localize sign-in, profile onboarding, cancellation, callback errors, and provider recovery guidance in English and Italian.
+- Add issuer/subject identity uniqueness, application user/profile, authentication session, and refresh token migrations. Use shared throttling, token verification, rotation/reuse detection, and device/global logout.
+- Handle invalid/replayed provider credentials, identity collisions, throttling, cancelled sign-in, and failed callbacks. Implement explicit linking/unlinking after policy confirmation; do not add local passwords or reset codes.
 - Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
 - Implement profile read and update, account state checks, and authentication guards.
-- Add authentication and authorization tests covering replay, expired challenges, refresh reuse, revoked sessions, cross-account access, and fixtures for host, player, and unrelated user accounts.
+- Add auth tests for provider signature/issuer/audience/nonce validation, replay, identity uniqueness, safe display-name collisions, throttling, linking ownership, refresh reuse, revocation, and cross-account access.
 
-**Complete when:** all three sign-in methods work on iOS and Android development builds; two users can sign in independently, edit only their own profile, and recover cleanly from expired links and sessions. Logs contain no authentication tokens, magic-link tokens, authorization codes, or sensitive profile data.
+**Complete when:** Google and Apple work on the agreed platforms through verified SDK/callback flows, first sign-in creates a profile, returning sign-in resolves the same user, and identity linking/session revocation follow the accepted rules. Logs contain no provider credentials, codes, tokens, or sensitive profile data.
 
 ## Step 3 Publish hosted sessions
 
@@ -99,7 +99,7 @@ Depends on step 4.
 - Render the precise location map only in authorized detail after approval and clear cached location on revocation or cancellation.
 - Add the scheduled completion job and cancellation history.
 - Add in-app notifications, push token registration and permission handling, event-triggered delivery, and safe versioned payloads. Fetch an initial snapshot, patch UI directly from received pushes, and reconcile on app entry or explicit refresh without polling or per-push refetches.
-- Cover durable delivery retries and crash recovery, duplicate/out-of-order payloads, push denial, deep-link authorization, and absence of background refresh requests.
+- Cover durable delivery retries/crash recovery, duplicate/out-of-order payloads, push denial, authorized navigation from notification taps, and absence of background refresh requests.
 - Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
 
 **Complete when:** two accounts complete discovery through approval; concurrent approval of the last seat admits one player; leaving frees a seat; cancellation or withdrawal revokes private location access.
@@ -110,7 +110,7 @@ Depends on steps 1 through 5.
 
 - Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
 - Add reporting, a minimal operator workflow, account deletion processing, and published privacy and support information.
-- Deploy staging on Vercel with Neon/PostGIS and Resend test recipients; validate migrations, backup recovery, redaction, and event-triggered push delivery.
+- Deploy staging on Vercel with Neon/PostGIS; validate Google/Apple sign-in, migrations, backup recovery, redaction, and event-triggered push delivery.
 - Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 

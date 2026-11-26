@@ -13,13 +13,13 @@ Unit tests, integration tests, and E2E tests are mandatory for both API and app 
 | Geographic integration tests | Same-city inclusion and neighboring-city radius cases across hemispheres; city centroids, antimeridian and high-latitude cases; exact venue coordinates never affect pre-approval results |
 | Concurrency tests | Multiple approvals compete for one seat; approval races with cancellation, withdrawal, completion, and capacity edits |
 | API E2E tests | Complete NestJS app over HTTP with PostgreSQL/PostGIS: token validation, hidden drafts, field validation, hostParticipates and seat counts, pagination, rate limiting, ownership, and protected location access |
-| Custom authentication tests | Magic-link expiry and atomic single consumption, concurrent token redemption, consistent link-request responses, social issuer and audience checks, state or nonce mismatch, refresh rotation and reuse, and device or global session revocation |
+| Custom authentication tests | Google/Apple claim/signature/nonce validation, replay and identity collisions, shared throttling, safe profile creation/linking, display-name separation, and refresh/session revocation |
 | Mobile unit tests | Form rules, isolated component and hook behavior, validation errors, and accessible status presentation |
 | Mobile integration tests | Screens, navigation, forms, query cache, and API client together: discovery states, membership status, failed actions, and refresh after a conflict |
 | Session edit tests | Venue/time/format changes with approved players, version conflicts, host opt-out/opt-in, capacity races, unaffected neighboring sessions, and transactional recipient notifications |
-| Notification tests | Initial snapshot, direct push-driven cache patches, no polling/per-push reads, duplicate and out-of-order handling, crash recovery, denied permission, token invalidation, and safe deep links |
-| Localization tests | English and Italian translation completeness, persisted locale, validation and error messages, email templates, locale-aware formatting, and session timezone independence |
-| Device end to end tests | Three sign-in methods on iOS/Android; expired links and failed callbacks; two-account approval and exact map; editable host participation; location denial and retry; push permission, foreground UI update, background tap, and missed-event reconciliation |
+| Notification tests | Initial snapshot, direct push-cache patches, no polling/per-push reads, duplicates/order, crash recovery, denied permission, token invalidation, and authorized navigation from taps |
+| Localization tests | English/Italian completeness, persisted locale, signup/login/recovery messages, locale-aware formatting, and session timezone independence |
+| Device end to end tests | Google/Apple onboarding and returning sign-in on agreed platforms; cancellation and callbacks; two-account approval/map; host editing; current location recovery; push/cache and re-entry |
 | Accessibility checks | Screen reader labels, focus after errors, large text, touch targets, and status communicated beyond color |
 
 Run geographic tests against PostgreSQL with PostGIS, not an SQLite substitute. Include a malicious request that tries to approve another host's applicant and discovery response assertions that reject any exact private location fields.
@@ -33,7 +33,7 @@ Automated E2E uses the real app, API, and database with controlled external-serv
 - Request foreground location for nearby discovery, and offer settings and retry when unavailable. Host venue entry is separate; no manual discovery destination or background tracking.
 - Store precise session locations separately for all venue types. Discovery and unapproved detail expose only the city; exact map data requires host or approved-participant authorization.
 - Validate payloads and enforce ownership, bounded search ranges, per-user and per-IP rate limits, and request size limits.
-- Store magic-link and refresh token hashes, restrict credential access, and redact authentication payloads and callback parameters from logs. Verify identity ownership before linking accounts once its policy is defined.
+- Store refresh token hashes, restrict provider credential access, and redact auth payloads. Verify identity ownership before linking; public names and matching emails cannot grant access. No local credential or reset-code store exists.
 - Limit public participant information to display names and approved membership. Pending requests remain visible only to their owner and host.
 - Confirm the proposed retention schedule before the pilot. Deletion processing cancels future hosted sessions, withdraws memberships, revokes access, and purges personal data according to the accepted policy, including backup expiry and restore handling.
 - Restrict operator access, record moderation actions, and define a report response process. The 18+ audience and age declaration are proposals in the operational document, not yet confirmed restrictions.
@@ -42,7 +42,7 @@ Automated E2E uses the real app, API, and database with controlled external-serv
 
 Treat these as initial pilot targets to measure, not existing guarantees. With 10,000 future sessions, 100,000 participation rows, 20 results per page, and 20 concurrent discovery users, target API discovery latency below 500 ms at the 95th percentile in staging. Target participation mutations below one second at the 95th percentile under representative pilot traffic.
 
-Inspect query plans to confirm geographic index use and avoid loading all sessions into application memory. Monitor slow queries, API error rates, connection pool saturation, failed authentication, and capacity conflicts. Do not log player coordinates, private addresses, bearer tokens, magic-link tokens, authorization codes, or email addresses.
+Inspect query plans to confirm index use and avoid loading all sessions into memory. Monitor slow queries, API errors, connection saturation, failed auth, and capacity conflicts. Do not log coordinates, private addresses, provider credentials, tokens/codes, or unnecessary profile data.
 
 ## Release checklist
 
@@ -51,12 +51,12 @@ Inspect query plans to confirm geographic index use and avoid loading all sessio
 - Staging and production use separate credentials and databases, HTTPS, validated environments, and verified included recovery features. Supplemental backups require existing private storage; no paid backup plan is funded.
 - Migrations are tested from both a fresh database and the previous release. Production schema changes remain compatible with the currently installed app and previous API release.
 - Secrets and privileged provider keys are absent from source control and app bundles.
-- Service plans and build runners respect the zero infrastructure budget: no paid upgrades, trials converting to payment, or overage fallback. Verify free quotas, clear quota-exhaustion states, and a controllable Resend sending domain before public magic-link delivery.
-- Custom authentication has passing challenge replay, social identity validation, refresh token rotation, and revocation checks. Email delivery and mobile callbacks work in the target environment.
+- Plans/runners respect zero spending with no paid upgrade, converting trial, or overage fallback. Verify free quotas and social callback setup with available hostnames; no email-sending domain is required.
+- Auth passes provider verification/replay checks, throttling, identity/profile mapping, accepted linking, refresh rotation, and revocation. Validate native and browser callbacks for Google and Apple on the agreed platforms.
 - Database restore and application rollback procedures are exercised; destructive schema rollback uses a documented recovery procedure.
 - Privacy policy, support contact, account deletion route, store location permission text, and privacy declarations match actual behavior.
-- The pilot confirms both platforms, three sign-in methods, host participation changes, city-only discovery, approved exact maps, no-polling push-driven updates, current-location denial/recovery, capacity races, and compatibility with the previous API contract.
-- Verify English and Italian, email templates, accessibility, and longer text. Use device position fixtures across countries, hemispheres, and timezones; discovery remains tied to current position.
+- The pilot confirms Google/Apple login, host changes, city-only discovery, approved maps, no-polling push updates, location recovery, capacity races, and API compatibility.
+- Verify English/Italian registration, credential and recovery messages, accessibility, and longer text. Device-position fixtures cover countries, hemispheres, and timezones while discovery stays tied to current position.
 - Individual hosts are responsible for third-party venue bookings; operators can act on reported or unsafe sessions.
 
 ## Deferred capabilities

@@ -13,7 +13,7 @@ The application repositories currently contain planning documentation rather tha
 | API E2E | Complete NestJS application through HTTP | Use real routing, validation, authentication guards, services, and PostgreSQL/PostGIS; assert status, response contract, authorization, and persisted effects |
 | App unit | Pure logic, form rules, and isolated component or hook behavior | Control native dependencies and time; assert user-visible state and accessible interactions |
 | App integration | Screens, navigation, forms, query cache, and API client working together | Use controlled HTTP responses and native adapters; verify request construction, transitions, refresh, and recovery across components |
-| App E2E | Installed app on Android or iOS, connected to the real test API and database | Drive native UI and deep links; verify complete user journeys and server-side results without replacing our own API or database |
+| App E2E | Installed app on Android or iOS, connected to the real test API and database | Drive native UI, notification taps, and any retained social callbacks; verify complete user journeys and server-side results |
 
 API HTTP E2E tests and mobile E2E tests are separate suites. Rendering a screen against mocked HTTP responses is an app integration test; it does not establish that the installed app works with the backend.
 
@@ -35,7 +35,8 @@ Confirm supported versions during scaffolding and pin dependencies. Use standard
 
 | Scenario | Unit coverage | Integration and API E2E coverage | App E2E acceptance |
 | --- | --- | --- | --- |
-| Authentication | Challenge expiry, session state, and identity decisions | Atomic magic-link consumption, replay rejection, social issuer/audience/signature checks, refresh rotation and reuse, device and global logout | Email link opens the app and establishes a real session; expired link and revoked session recover clearly |
+| Authentication | Provider claim, session, identity, and public-name rules | Real signature/issuer/audience/nonce validation, replay rejection, identity uniqueness, throttling, profile creation, returning-login resolution, rotation/reuse, and logout | Google/Apple sign-in and onboarding work through the selected native/browser flows; cancellation, invalid credentials, session expiry, and provider recovery guidance are clear |
+| Identity linking if adopted | Ownership and last-linked-provider rules | Fresh verification links an identity to only its owner; matching emails or display names cannot merge accounts; unlink cannot remove the last usable identity | Linking a second provider accesses the same profile, and losing all providers does not expose a local reset bypass |
 | Session creation | Time ordering, capacity bounds, host participation default | Omitted or true hostParticipates creates one approved host membership; false creates none; transaction failure leaves no partial session | Publish a four-player table with three available seats by default and four when the host only provides the table |
 | Host permissions | Ownership independent of playing status | Playing and non-playing hosts can manage their own session; another user cannot | A non-playing host publishes, reviews a request, and approves a player |
 | Nearby discovery | Current-position state, filter validation, and city-only display | Real city-centroid PostGIS queries, same-city inclusion, neighboring-city boundaries, date/format filters, and availability | Simulate current device position, find a city-only card, and recover from permission denial using settings/retry |
@@ -47,18 +48,18 @@ Confirm supported versions during scaffolding and pin dependencies. Use standard
 | Leaving and cancellation | Allowed transitions and lifecycle rules | Leaving frees a seat; cancellation blocks requests and approvals, including concurrent actions | Upcoming lists and details reflect withdrawal or cancellation after refresh |
 | Time and lifecycle | UTC conversion boundaries, joining cutoff, and completion | Reject already-started sessions; verify timezone and daylight saving examples; completion is idempotent | Session details display the intended local time and timezone |
 | Global geography | Coordinate validation and independence from locale | Cities across hemispheres, high latitudes, and the antimeridian; no country allowlist; exact location never influences public results | Use simulated current-device locations worldwide while host venue creation remains globally available |
-| English and Italian | Translation keys, locale selection and fallback, and formatting | Preferred locale persistence, both email templates, stable error codes, and unchanged UTC instants and venue timezones after locale changes | Run critical hosting, discovery, joining, and error recovery flows in en and it on Android and iOS; verify text expansion and language switching |
+| English and Italian | Translation keys, locale selection/fallback, and formatting | Preferred locale persistence, localized signup/login/recovery messages, stable error codes, and unchanged UTC instants and venue timezones | Run critical registration, hosting, discovery, joining, and error recovery in en and it on Android/iOS; verify text expansion and language switching |
 | Failures and accessibility | Input errors and status presentation | API validation and error contracts; app integration covers offline, timeout, stale cache, and expired session behavior | Essential actions remain understandable with errors, large text, and accessible controls; device permission failures have a recovery path |
 
 Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Product rules that remain open must be resolved before their acceptance tests are finalized.
 
 ## External services and native sign in
 
-Unit and integration suites use controlled adapters for email, geocoding, Google, and Apple. API and full-system E2E suites run our own application and database for real; replace external services only at their boundaries. Use a local test mailbox for magic links and controlled issuer keys or provider responses for deterministic social authentication tests. Keep token verification active in those tests.
+Unit and integration suites control geocoding, push, and social issuer boundaries. API/full-system E2E run the real application, provider-token verification, and database; controlled issuer keys make credentials deterministic without disabling validation. The app has no local password or mailbox dependency.
 
-Automated social-auth tests using controlled provider responses do not verify the real Google or Apple consent UI. Before release, run and record smoke tests for all three actual sign-in methods on Android and iOS using dedicated test accounts. Native callbacks, permission prompts, and real-device behavior complement the automated suite.
+Controlled issuer tests do not verify real provider consent UI. Before release, smoke-test Google and Apple on the agreed platforms with dedicated accounts. Test native callbacks, browser return where needed, permission prompts, and profile creation on devices. Do not assume an iOS-only SDK supplies Android support.
 
-Any test-only adapter must be selected by explicit test configuration, fail to activate in production, and never provide a public authentication bypass. Keep credentials outside the repository and redact tokens, email links, private addresses, and provider responses from reports and recordings.
+Any test adapter must use explicit configuration, fail to activate in production, and never provide an auth bypass. Keep credentials outside the repository and redact provider tokens/codes, private addresses, and provider responses from reports and recordings.
 
 For notification automation, inject a synthetic foreground push event at the native adapter boundary and assert cache/inbox updates while an HTTP spy confirms no inbox or session refetch. Simulate duplicate, old, missing, and revoked-access events. A one-shot launch/re-entry snapshot is allowed for recovery; there is no timer-based client or notification-table polling. Device release checks separately exercise real APNs/FCM delivery and background notification taps.
 

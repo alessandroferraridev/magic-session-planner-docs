@@ -9,12 +9,12 @@ Start with a complete flow from current-location discovery to receiving a confir
 - Seat requests require host approval.
 - Hosting uses personal accounts only, without store or organization profiles.
 - At session creation, the host chooses whether to play or only provide the table. Playing is the default.
-- Authentication is managed by the NestJS backend, with email magic links, Google, and Apple sign-in. The backend owns application users, sessions, and tokens.
+- Authentication uses Google and Apple only. NestJS owns application users, linked provider identities, and sessions; there is no local username/password or sending service.
 - The mobile app targets iOS and Android through Expo.
 - Hosting and discovery support locations worldwide. The interface supports English and Italian.
 - Discovery starts from current device location and shows a city-only list. Approved session detail includes the exact location and map.
 - Hosts can edit all session business fields and their own playing participation. Notifications include an initial in-app snapshot and push-driven UI updates, without polling.
-- NestJS is hosted on Vercel, PostgreSQL/PostGIS on Neon, and email delivery on Resend.
+- NestJS is hosted on Vercel and PostgreSQL/PostGIS on Neon. Email login is a possible future extension if a sending domain and delivery setup are chosen.
 - Infrastructure budget is zero beyond store publication. Use free tiers and existing resources without paid upgrades or overages.
 - Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
 - Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
@@ -25,6 +25,7 @@ Start with a complete flow from current-location discovery to receiving a confir
 | --- | --- |
 | [Product scope](./product-scope.md) | Users, screens, session rules, and MVP acceptance criteria |
 | [Architecture](./architecture.md) | Technology choices, repository boundaries, and geolocation design |
+| [Authentication decisions](./authentication-decisions.md) | Social-only scope, separate public identity, and remaining linking, platform, and session choices |
 | [Data and API](./data-and-api.md) | Entities, endpoints, permissions, and seat allocation |
 | [Development roadmap](./development-roadmap.md) | Ordered delivery steps with dependencies and completion checks |
 | [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
@@ -50,7 +51,7 @@ This delivery initializes repositories and records the plan. Framework scaffoldi
 
 ## Initial delivery sequence
 
-1. Resolve remaining product decisions, define account linking, and review the operational proposals for the confirmed Vercel, Neon, and Resend stack.
+1. Resolve remaining product/authentication decisions and review operating constraints for the confirmed Vercel and Neon stack.
 2. Scaffold the NestJS and React Native projects and establish local development and CI.
 3. Implement authentication, profiles, venue locations, and session publishing.
 4. Deliver location permission handling and nearby table discovery.
