@@ -1,52 +1,38 @@
-# Magic session planner development plan
+# Magic session planner
 
-Build a mobile application where Magic: The Gathering players worldwide can discover nearby tables, host a session, request a seat, and manage upcoming games. The backend will use NestJS and the mobile app will use React Native.
+Development plan for a mobile app to organize in-person Magic: The Gathering sessions worldwide. The API uses NestJS; the iOS/Android app uses React Native with Expo.
 
-Start with a complete flow from finding a nearby table to receiving a confirmed seat. Add maps, chat, and advanced store features after that flow works reliably.
+The repositories currently contain the development plan and bootstrap files. Application scaffolding, provider registrations, CI suites and deployment are implementation work in the roadmap. The only open product choice is the initial format catalogue.
 
-## Confirmed product choices
+## Documentation by topic
 
-- Seat requests require host approval.
-- At session creation, the host chooses whether to play or only provide the table. Playing is the default.
-- Authentication is managed by the NestJS backend, with email magic links, Google, and Apple sign-in. The backend owns application users, sessions, and tokens.
-- The mobile app targets iOS and Android through Expo.
-- Hosting and discovery support locations worldwide. The interface supports English and Italian.
-- Use Gitflow with `main` for releases, `dev` for integration and staging, and feature, fix, release, and hotfix branches.
-- Implement unit, integration, and E2E tests for both API and app, starting with scaffolding and extending coverage with each feature.
+Each document owns the rules for its topic. Other documents link to those rules rather than maintain separate decision summaries.
 
-## Read the plan
+| Topic | Document | Owns |
+| --- | --- | --- |
+| Product | [Product scope](./product-scope.md) | Audience, hosting and joining rules, privacy visible to players, screens, languages and MVP acceptance |
+| Authentication | [Authentication](./authentication.md) | Google/Apple flows, onboarding, identity linking, tokens, callbacks and revocation |
+| Architecture | [Architecture](./architecture.md) | Stack, modules, repository boundaries, geographic search and localization design |
+| Data and contracts | [Data and API](./data-and-api.md) | Entities, constraints, permissions, endpoints and transactional seat allocation |
+| Notifications and jobs | [Delivery and recovery](./delivery-and-recovery.md) | Durable commands, push payloads, UI updates, retries, lifecycle jobs and maintenance execution |
+| Operations | [Operations](./operations.md) | Free infrastructure, environments, quotas, support operations, retention and backup/restore duties |
+| Tests | [Testing strategy](./testing-strategy.md) | Unit/integration/E2E suites, test tools/runners, coverage, fixtures and CI gates |
+| Release readiness | [Quality and release](./quality-and-release.md) | Performance targets, privacy checks, release evidence and rollback readiness |
+| Development | [Development roadmap](./development-roadmap.md) | Ordered implementation steps, dependencies and completion checks |
+| Git | [Git workflow](./git-workflow.md) | Branch roles, pull requests, GitHub protections, staging and release promotion |
+| Open question | [Open decisions](./open-decisions.md) | Initial formats only |
 
-| Document | Purpose |
-| --- | --- |
-| [Product scope](./product-scope.md) | Users, screens, session rules, and MVP acceptance criteria |
-| [Architecture](./architecture.md) | Technology choices, repository boundaries, and geolocation design |
-| [Data and API](./data-and-api.md) | Entities, endpoints, permissions, and seat allocation |
-| [Development roadmap](./development-roadmap.md) | Ordered delivery steps with dependencies and completion checks |
-| [Quality and release](./quality-and-release.md) | Tests, security, operations, and launch requirements |
-| [Testing strategy](./testing-strategy.md) | Required unit, integration, and E2E suites, scenarios, environments, and CI gates |
-| [Git workflow](./git-workflow.md) | Branches, pull requests, staging, release tags, and hotfixes across the three repositories |
-| [Open decisions](./open-decisions.md) | Confirmed choices, remaining questions, and working assumptions |
+Start with product scope, then architecture and the roadmap. Consult the dedicated specification when implementing a feature and update that document when its requirements change.
 
 ## Workspace layout
 
 ```text
 magic-session-planner-project/
-  magic-session-planner-docs/         Independent documentation Git repository
-  magic-session-planner-app/          Independent React Native Git repository
-  magic-session-planner-api/          Independent NestJS Git repository
+  magic-session-planner-docs/         Shared specifications and development plan
+  magic-session-planner-app/          React Native app and its tests/builds
+  magic-session-planner-api/          NestJS API, schema, migrations and API tests
 ```
 
-All three folders are independent Git repositories with an initial branch named `main`. The shared product and development plan is maintained in `magic-session-planner-docs`. Keep the three repositories alongside each other in the parent workspace so relative documentation links resolve. The parent workspace is not a Git repository.
+These are independent Git repositories. Keep them beside each other so relative cross-repository documentation links resolve. The parent workspace is not a Git repository.
 
-Future work follows the [Git workflow](./git-workflow.md): branch from `dev`, integrate through pull requests, and promote releases to `main`. All three repositories have active GitHub rulesets and use `dev` as their default branch. CI checks and deployment pipelines remain project setup tasks.
-
-This delivery initializes repositories and records the plan. Framework scaffolding, dependency installation, database setup, and application implementation begin in roadmap step 1.
-
-## Initial delivery sequence
-
-1. Resolve the remaining MVP product decisions, define account linking, and choose email delivery and hosting services.
-2. Scaffold the NestJS and React Native projects and establish local development and CI.
-3. Implement authentication, profiles, venue locations, and session publishing.
-4. Deliver location permission handling and nearby table discovery.
-5. Implement seat requests, host approval, cancellation, and personal session lists.
-6. Validate the full flow on real devices, deploy staging, and run a limited pilot.
+All three repositories use protected `dev` as the default branch and `main` for release milestones. Routine work starts from `dev` and integrates through pull requests under the Git workflow. Existing GitHub rulesets are configured; real CI checks and delivery pipelines are roadmap tasks.

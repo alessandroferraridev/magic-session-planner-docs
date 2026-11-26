@@ -2,7 +2,7 @@
 
 Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Native application built with Expo and TypeScript. This keeps the initial system manageable while giving location search database support and allowing independent mobile and API releases.
 
-## Proposed technology choices
+## Accepted technology choices
 
 | Area | Choice | Purpose |
 | --- | --- | --- |
@@ -14,11 +14,14 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | API contract | NestJS OpenAPI generation | Documented endpoints and generated mobile client types |
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
-| Authentication | Custom NestJS authentication with email magic links, Google, and Apple | Backend owns application accounts, sessions, access tokens, and refresh tokens |
+| Authentication | Google and Apple only, with NestJS-owned application sessions | Explicit linking, immediate revocation, and native/browser flows as specified in the authentication document |
+| API hosting | Vercel | NestJS runs as a request-based Vercel Function; scheduled work uses bounded invocations |
+| Managed database | Neon PostgreSQL with PostGIS | Separate production and staging resources and credentials |
+| Push delivery | Expo push service and expo-server-sdk | APNs/FCM transport with authoritative in-app notifications and bounded durable retries |
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
-| CI and deployment | Provider selected in step 0 | Automated validation and separate staging and production environments |
+| CI | GitHub Actions standard runners, confirmed | Linux for API/Android and macOS for iOS; public repositories and included storage only |
 
-Choose currently supported stable framework versions during scaffolding and commit each lockfile. Do not pin speculative versions in this plan. A map or geocoder provider must be selected before manual town search is implemented, considering worldwide coverage, cost, storage terms, and attribution.
+Use npm and supported stable versions compatible with Expo/NestJS, pinned in lockfiles during scaffolding. Use Expo development builds, not Expo Go, for native authentication/maps. Geoapify Free supplies geocoding/city resolution and the osm-bright map style; MapLibre React Native renders approved-detail maps. See the [operating policy](./operations.md) for quotas, attribution and privacy. Use i18next/react-i18next with Expo Localization, expo-secure-store, Nest ValidationPipe/class-validator, nestjs-pino structured redacted logging, and standard GitHub Actions. Dependency patch selection is an implementation task, not an open architecture decision.
 
 ## System boundaries
 
@@ -27,71 +30,67 @@ flowchart LR
     Player[React Native app] -->|Sign in and application bearer token over HTTPS| API[NestJS API and custom authentication]
     Player -->|Social sign in| Social[Google and Apple]
     API -->|Exchange and verify social identity| Social
-    API -->|Deliver magic link| Email[Email delivery service]
-    API --> DB[(PostgreSQL and PostGIS)]
+    API --> DB[(Neon PostgreSQL and PostGIS)]
     API --> Geo[Geocoding provider]
-    API -. Optional later .-> Push[Push notification provider]
+    API -->|Durable delivery work| Push[Push notification provider]
 ```
 
-The API validates its own application access tokens. Google and Apple credentials are verified during social sign-in, then exchanged for our application session. Cache external public verification keys according to their providers' guidance. Store app tokens in device secure storage and enforce authorization rules on the API.
+Google and Apple authenticate the external identity; the API owns application authorization. The authentication specification defines credential verification and device token storage.
 
-## Confirmed authentication methods
+## Authentication boundary
 
-Support email magic links, Google sign-in, and Apple sign-in in the Expo app on iOS and Android. The NestJS authentication module owns local users, identity associations, login challenges, and application sessions. Google and Apple remain external identity providers for their respective sign-in methods; email delivery uses a separately selected service or SMTP setup.
-
-- Generate cryptographically random magic-link tokens, store only their hashes, enforce expiry, and consume them atomically once. Opening the link must not expose a long-lived application credential in a URL.
-- Integrate Google and Apple using maintained authentication libraries and their supported flows. Validate issuer, audience, signature, expiry, and transaction state or nonce; apply PKCE where the selected authorization-code flow supports it. Keep privileged credentials on the API.
-- Issue short-lived application access tokens and rotating refresh tokens linked to a server-side authentication session. Store refresh token hashes, track rotation and reuse, and support revocation and logout from one or all devices.
-- Rate-limit link requests, token consumption, and refresh operations. Use consistent link-request responses for existing and unknown addresses. Redact credentials from logs and analytics.
-- Handle expired or reused links, cancelled social sign-in, failed callbacks, and revoked sessions in the app before updating signed-in state.
-
-The email delivery service, library choices, token lifetimes, key rotation schedule, and account linking policy remain open. One local user can have multiple authentication identities; attaching an additional identity requires an explicitly defined ownership verification flow. Do not automatically merge accounts based only on matching email addresses while that policy is unresolved.
-
-Use established libraries for cryptography and authentication protocols. Backend ownership includes maintaining the authentication implementation and its security tests. Reference the [NestJS authentication documentation](https://docs.nestjs.com/security/authentication), [OWASP email token guidance](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), and [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) during implementation.
+NestJS verifies Google/Apple credentials and owns internal users, authorization and application sessions. The complete platform/library, onboarding, linking, token, key and revocation specification is in [Authentication](./authentication.md).
 
 ## Backend modules
 
-- `Auth`: magic-link challenges, Google and Apple integration, identity resolution, application token issuance and verification, refresh rotation, and authentication session revocation.
+- `Auth`: Google/Apple verification, internal identity resolution/linking, application tokens, refresh rotation, and session revocation.
 - `Users`: display profiles, preferences, and deletion requests.
-- `Venues`: public search locations and protected private addresses.
-- `Sessions`: drafts, the host's playing choice at creation, publishing, editing, cancellation, and lifecycle jobs.
+- `Venues`: owner-managed saved venues, canonical city references and separately protected exact locations for every venue type.
+- `Sessions`: drafts, editable business fields and host participation, versioned updates, publishing, cancellation, and lifecycle jobs.
 - `Participation`: requests requiring host approval, optional approved host membership, withdrawal, and capacity transactions.
-- `Discovery`: geographic filtering, distance sorting, and pagination.
+- `Discovery`: canonical city-level filtering/ranking and pagination, with no distance labels in public responses.
 - `Moderation`: basic reports and operator actions before public launch.
+- `Notifications`: initial inbox snapshot, device tokens, preferences, versioned UI event payloads, event-triggered push dispatch, and receipt handling.
 - `Health`: liveness, readiness, and dependency status.
 
-Controllers validate requests, guards enforce access, and services own business rules. Database transactions span session and participation changes. Start without Redis, microservices, websockets, or a separate message broker. Add a transactional outbox if reliable asynchronous notifications become part of a later release.
+Controllers validate requests, guards enforce access, and services own business rules. Database transactions span session changes, participation, in-app notifications, and delivery event records. Keep the API a modular monolith without self-hosted Redis, microservices, or websockets; use the selected Vercel Workflow/Nest adapter and prove its recovery contract before pilot.
+
+## Runtime and asynchronous boundaries
+
+NestJS runs as bounded Vercel Functions against Neon PostgreSQL/PostGIS. Environment isolation, database connections, migrations, regions and quota constraints are defined in [Operations](./operations.md#deployment-and-environments).
+
+The selected Vercel Workflow/Nest adapter executes durable commands and scheduled jobs. Its acceptance-before-mutation contract, generated consumer deployment, pending responses, completion generation and no-polling push/cache behavior are specified in [Delivery and recovery](./delivery-and-recovery.md). Seat locks, version conflicts and protected location snapshots are specified in [Data and API](./data-and-api.md).
 
 ## Mobile modules
 
 Organize code by authentication, discovery, sessions, hosting, participation, and profile. Keep navigation routes small and place API access, secure token storage, and location services behind shared adapters.
 
-The API is authoritative for capacity and membership. Invalidate session detail, discovery, and personal lists after participation changes. An optimistic UI must never show a confirmed seat before the server approves it. Avoid persistent caching of private venue details; clear sensitive query data when signing out or losing access.
+The API is authoritative for capacity and membership. Mobile adapters implement the [notification/cache contract](./delivery-and-recovery.md#notification-contract); an optimistic UI never confirms a seat before server approval. Precise locations stay in memory only, with cleanup on access loss or logout.
 
 ## Geographic search
 
-Hosting and discovery accept valid locations worldwide. Do not add launch-country allowlists or regional bounding boxes. Let players choose a search destination independently of their device location. A query radius remains local to its chosen point, including when that point is in another country.
+Hosting accepts valid locations worldwide. Discovery uses the current foreground device position wherever the player is, without a manually selected destination or a launch-country allowlist. On permission denial or location failure, expose settings and retry actions while keeping personal session lists available.
 
-Choose global geocoding coverage and support manual venue positioning when an address cannot be resolved. Address input must support international formats without requiring one country's state or postal-code structure. Database hosting regions and capacity remain infrastructure choices; the product's worldwide location support does not require a separate deployment in every region.
+Use Geoapify global geocoding and support manual venue positioning during hosting when an address cannot be resolved, requiring canonical city and IANA timezone before publication. Address input supports international formats. The location label before approval is a canonical city, rather than a street, neighborhood, venue name, or host-selected precise point. Worldwide support does not require a deployment in every region.
 
 1. Accept latitude, longitude, radius in kilometers, date range, filters, and pagination. Validate coordinate ranges, cap radius at 100 km, page size at 50, and the search window at 90 days.
-2. Store public discovery positions as PostGIS `geography(Point, 4326)` and create a GiST index. Construct points with longitude first and latitude second.
-3. For public venues, use their published location. For private venues, use the host's selected neighborhood or area centroid as the discovery position; store the exact address and point separately.
-4. Apply `ST_DWithin` to the discovery position using meters, then calculate and sort distance with `ST_Distance`. The radius filter and ordering must use the same public position. Never search against a secret point and merely round its returned distance.
-5. Return rounded approximate distances, public location fields, and current available seats. Filter published future sessions using confirmed participation counts.
+2. Store canonical city centroids as PostGIS `geography(Point, 4326)` with a GiST index. All sessions in one city reference its shared discovery point. Keep exact session coordinates separately protected for every venue type.
+3. Resolve the device's current city/locality via Geoapify; canonicalize by provider city/locality ID and use its shared city feature centroid, never a reverse-geocoded street point. For rural addresses use the containing named municipality/locality, not a host-supplied micro-area. If unavailable, ask for retry instead of falling back to exact venue coordinates. Include eligible sessions in that city and use the radius to include nearby city centroids; this avoids excluding the user's city merely because its center is far away. Geographic ranking is city-level and never based on a secret venue point.
+4. Apply `ST_DWithin` and `ST_Distance` to city discovery points in meters for neighboring-city filtering and ranking. These approximate search semantics need representative large-city and boundary tests; do not filter or sort on exact venue coordinates before approval.
+5. Return city labels and available seats, with no address, venue name, map coordinates, or precise distance. Filter published future sessions using confirmed participation counts.
 6. Begin with bounded offset pagination, defaulting to 20 results. Use stable secondary ordering by start time and session ID; results may move as capacity changes. Revisit cursor pagination after measuring demand.
 
-Private venue search is approximate by design: neighborhood boundaries may affect whether a session appears near the edge of a radius. Show an approximate area label. Expose exact private details through a separate endpoint authorized for the host or an approved player, and revoke access after withdrawal, cancellation, or completion.
+Discovery is city-level and approximate. Both the list and unapproved detail expose only the city, including for public venues. A separate endpoint authorizes the host or an active approved participant to retrieve the exact address and map point in session detail. Revoke participant access after withdrawal, cancellation, or completion. An approved player opening a discovery card still receives a city-only card; precise detail requires the protected request.
 
-Device coordinates are request data for discovery. Do not maintain a history of player movement. Redact location query parameters from API, proxy, analytics, and error logs. Use foreground location on explicit actions; do not enable background tracking.
+Device coordinates are request data for discovery. Do not maintain a history of player movement. Send current coordinates in the POST /v1/discovery/search body with body logging disabled; avoid query strings that platform access logs may retain. Redact location from API, proxy, analytics and error logs. Use foreground location on explicit actions; do not enable background tracking.
 
 ## English and Italian localization
 
-Keep English and Italian translation catalogs, identified by `en` and `it`, for interface text, validation and recovery messages, and authentication email templates. Store the user's preferred interface locale separately from a session's play language and timezone. User-authored titles, descriptions, and venue names are preserved as entered.
+Keep English and Italian translation catalogs, identified by `en` and `it`, for interface text, validation, and recovery messages. Store preferred interface locale separately from a session's play language and timezone. User-authored titles, descriptions, and venue names are preserved as entered.
 
-The proposed initial selection uses the device language when supported, otherwise English, with an explicit language setting that persists for the user. Format dates, times, numbers, and plurals for the selected locale. Keep session time interpretation tied to the venue's IANA timezone and UTC storage, independently of the interface language or device timezone.
+Initial locale selection uses the device language when supported, otherwise English, with an explicit language setting that persists for the user. Format dates, times, numbers, and plurals for the selected locale. Keep session time interpretation tied to the venue's IANA timezone and UTC storage, independently of the interface language or device timezone.
 
-Return stable machine-readable API error codes for the app to localize. Carry an explicit supported locale for pre-login magic-link requests so email templates use the chosen language. Verify complete translation keys and text expansion on both mobile platforms during testing.
+Return stable machine-readable API error codes for the app to localize. Verify translation keys and text expansion for first social login, profile setup, cancellation, callbacks, identity linking, and session errors on both platforms.
 
 ## Repository responsibilities
 
@@ -101,4 +100,4 @@ Publish a versioned OpenAPI artifact from backend CI, then update the app client
 
 Use the [Git workflow](./git-workflow.md) in all three repositories. Validated `dev` changes feed staging; tagged releases on `main` identify production API artifacts and mobile release builds. API and app versions advance independently and must remain compatible with installed app versions.
 
-Secrets belong in deployment secret stores or local ignored environment files. The app may contain the public API base URL and public OAuth client identifiers, but it must never contain database credentials, token-signing keys, OAuth client secrets, Apple signing credentials, or email service credentials.
+Secrets belong in deployment secret stores or local ignored environment files. The app may contain the public API base URL and public OAuth client identifiers, but it must never contain database credentials, token-signing keys, OAuth client secrets, or Apple signing credentials.
