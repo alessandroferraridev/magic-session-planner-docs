@@ -16,7 +16,8 @@ Reviewed on 26 November 2026 against the owner's latest decisions and zero infra
 | [Tests](./testing-strategy.md) | Unit/integration/API E2E/native E2E retained; auth, retention, durable command, no-polling and lifecycle coverage extended |
 | [Git workflow](./git-workflow.md) | Existing Gitflow/rulesets retained; CI/deployment configuration accurately remain unimplemented |
 | [Operating policy](./operational-proposal.md) | Zero-cost services, non-commercial pilot, 18+, actual retention deadlines and limited manual recovery selected |
-| [Open decisions](./open-decisions.md) | Exactly one open row: initial formats; Commander is an example/candidate only |
+| [Confirmed decisions](./confirmed-decisions.md) | Accepted decisions are kept separately from the open question |
+| [Open decisions](./open-decisions.md) | Contains only initial formats; Commander is a candidate only |
 | [API README](../magic-session-planner-api/README.md) / [app README](../magic-session-planner-app/README.md) | Obsolete magic-link/provider-undecided descriptions removed; dev workflow and canonical policy links added |
 
 [Delivery and recovery](./delivery-and-recovery.md) is the new implementation contract for the notification durability gap found in the audit.
