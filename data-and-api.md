@@ -6,11 +6,9 @@ Represent a scheduled table as a session and keep participation separate so requ
 
 | Entity | Principal fields | Constraints |
 | --- | --- | --- |
-| User | UUID, username and normalized key, display name, preferredLocale, timestamps, deletion state | Unique normalized username; preferredLocale is en or it; identifier/public-name policy remains to be finalized |
+| User | UUID, display name, preferredLocale, timestamps, deletion state | No login username; preferredLocale is en or it; public name does not identify a sign-in account |
 | City | UUID, name, country code, canonical discovery centroid | Shared city-level search point; exact session coordinates never drive pre-approval discovery |
-| PasswordCredential | User ID, password hash, algorithm/work-factor metadata, changed at | At most one local credential per user; enrollment follows accepted identity policy; use Argon2id and never serialize hashes |
 | AuthIdentity | UUID, user ID, provider, issuer and subject | Unique external issuer and subject; linking requires explicit ownership proof; do not merge by provider email |
-| RecoveryCode if adopted | UUID, user ID, code hash, batch, consumed at, expiry | Proposed recovery model only; high-entropy codes, hashes only, atomic single consumption |
 | AuthSession | UUID, user ID, created at, expires at, revoked at | Application login session, separate from a scheduled game session; supports per-device and global logout |
 | RefreshToken | UUID, auth session ID, token hash, rotation family, expires at, consumed at, revoked at | Track rotation and detect reuse; invalidate affected session on confirmed reuse |
 | Venue | UUID, personal owner ID, name, city ID, timezone, accessibility notes | Only the personal owner can edit; discovery responses expose only the city |
@@ -61,16 +59,14 @@ All routes below use `/v1`, except service health endpoints. The following authe
 
 | Method and route | Purpose and access |
 | --- | --- |
-| `POST /auth/register` | Public, rate-limited local signup with username/password and profile fields; enforce normalized uniqueness and password rules |
-| `POST /auth/login` | Public, rate-limited username/password verification; generic failure response and application session on success |
 | `GET /auth/:provider/start` | Start Google or Apple sign-in with transaction state; provider must be an explicit allowlisted value |
 | `GET or POST /auth/:provider/callback` | Validate the provider response using its supported callback method; complete app return without exposing long-lived credentials in the URL |
+| `POST /auth/:provider/exchange` | Verify supported native SDK credentials with transaction proof; resolve/create the application user and issue the app session |
 | `POST /auth/refresh` | Authenticate with a valid refresh token, rotate it, and issue a new short-lived access token |
 | `POST /auth/logout` | Revoke the current authentication session using a valid session credential; repeated logout is safe |
 | `POST /auth/logout-all` | Authenticated operation revoking all of the user's authentication sessions |
-| `POST /me/password` | Reauthenticated password change or explicitly authorized credential enrollment; define other-device revocation policy |
 
-The app receives the API's application access token, not a Google or Apple token for general API authorization. Social callback/exchange routes depend on the retained providers and selected SDKs; local registration/login does not require a callback. Account linking and recovery endpoints remain unimplemented contracts until their policies are decided. If recovery codes are adopted, define authenticated generation/regeneration and rate-limited code consumption with password replacement and session revocation. Do not expose a reset route based only on username or an unverified email. Session revocation prevents future refreshes; define immediate access-token revocation versus short expiry before implementation.
+The app receives the API's access token, not a provider token for general API authorization. Callback/exchange routes depend on the selected Google/Apple SDKs; expose only the flows actually used. First verified sign-in creates a profile transactionally under issuer/subject uniqueness. Account linking/unlinking endpoints await policy decisions and fresh identity proof. No local registration, password reset, or recovery code endpoint exists. Provider account recovery belongs to the provider. Session revocation stops refreshes; finalize immediate access-token invalidation versus short expiry before implementation.
 
 Authentication is required for the application routes below unless explicitly noted.
 

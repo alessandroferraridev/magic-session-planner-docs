@@ -13,7 +13,8 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | Discovery origin | Current foreground device position | No manually selected search destination; permission and location failures have explicit recovery states |
 | Location disclosure and map | Discovery list shows only the city; approved participants see the precise location and map in session detail | Protect exact addresses and coordinates on the API; hosts can inspect their own session location |
 | Notifications | In-app and push in the MVP, without polling | Load an initial snapshot; push events update local UI state directly. Persist authoritative events and use event-triggered delivery, with one-shot recovery on app entry |
-| Authentication methods | Username and password replace email-link login; Google and Apple remain in the existing scope | Local login needs no email service or app-return link; social callback scope must be resolved separately |
+| Authentication methods | Google and Apple only | No local username/password, recovery codes, or sending service; native SDK/callback setup still applies to social login |
+| Public identity | Public display name is separate from sign-in identity | No login username in the MVP; internal UUID and provider issuer/subject identify the user |
 | Authentication ownership | Custom authentication in the NestJS backend | Own application users, identity associations, sessions, and tokens; integrate directly with Google and Apple for social sign-in |
 | Hosting providers | Vercel for NestJS and Neon for PostgreSQL/PostGIS | No email delivery provider is required; use bounded serverless jobs and isolated environments |
 | Platforms | iOS and Android through Expo | Both platforms are required for development, testing, and distribution |
@@ -32,7 +33,7 @@ The remaining defaults support planning only. They have not been confirmed.
 | Decision | Proposed default | Effect on development |
 | --- | --- | --- |
 | Initial formats | Commander first | Keeps filters and forms small; format storage remains extensible |
-| Authentication implementation details | Social scope, username model, recovery without email, account linking, session policy, and compatible libraries | Proposed defaults and the required product decisions are in the authentication document |
+| Authentication implementation details | Linking/unlinking, session/revocation policy, provider client registrations, and compatible SDKs | Social scope and absence of local credentials are confirmed; remaining defaults are in the auth document |
 | Retention | Proposed category-specific periods, including 90-day session history and deletion within 30 days | See the operational proposal; durations require confirmation and implementation |
 | Audience | Proposed initial 18+ personal-account audience worldwide | No store accounts; the age policy is a proposal rather than a confirmed restriction |
 | Free delivery and backup feasibility | Validate included Workflow/Queue recovery and a private backup destination | Do not assume paid durable retention or 30-day managed database recovery is included |
@@ -40,7 +41,7 @@ The remaining defaults support planning only. They have not been confirmed.
 ## Questions still open
 
 1. Should the first version focus on Commander or launch with multiple formats?
-2. Which defaults in [Authentication decisions](./authentication-decisions.md) should be adopted for social login, recovery, usernames, linking, and session policy?
+2. Which linking/unlinking and session/revocation defaults in [Authentication decisions](./authentication-decisions.md) should be adopted, and which app identifiers/provider client registrations will be used?
 3. Should the proposed retention schedule and 18+ audience in the [operational document](./operational-proposal.md) be adopted?
 4. Is there an existing private destination for any supplemental encrypted backups?
 

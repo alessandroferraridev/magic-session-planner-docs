@@ -1,6 +1,6 @@
 # Operating constraints retention audience and test infrastructure
 
-The product owner has selected Vercel for NestJS and Neon for PostgreSQL/PostGIS. Local signup/login uses username/password without an email delivery service or sending domain. Infrastructure spending is zero beyond store publication. Test infrastructure and coverage gates are accepted; retention, audience, recovery/social policies, and the durable delivery adapter still have open choices. No service account or billing setting is provisioned by this documentation.
+The product owner has selected Vercel for NestJS, Neon for PostgreSQL/PostGIS, and Google/Apple-only sign-in. There are no local passwords, login usernames, email delivery service, or local recovery flow. Infrastructure spending is zero beyond store publication. Tests and coverage are accepted; retention, audience, identity linking/session rules, and the durable delivery adapter still have open choices. No service account or billing setting is provisioned by this documentation.
 
 ## Confirmed zero infrastructure budget
 
@@ -13,7 +13,7 @@ Use free tiers and existing resources only, with no subscription, paid overage, 
 | Neon | 0 | Free plan: 100 CU-hours/project/month, 1 GB PostgreSQL storage/project, and 5 GB public transfer/project/month |
 | Push transport | 0 | Expo push service candidate; sends still consume the API/database's included resources |
 | Mapping and geocoding | 0 | A provider with a usable free tier and attribution; reject paid overages rather than assuming a paid map allowance |
-| API hostname | 0 | Use the supplied vercel.app HTTPS hostname; local credentials need no sending domain |
+| API hostname | 0 | Use the supplied vercel.app HTTPS hostname and validate social callback configuration without assuming a purchased domain |
 | Backup and monitoring | 0 | Included provider features and existing private storage; no paid log retention or backup destination |
 | CI and native builds | 0 | Standard GitHub Actions runners for the public repositories, within included storage; no paid EAS or larger runner |
 | Total infrastructure spending | 0 | Quota exhaustion can reduce availability; no automatic paid fallback |
@@ -30,9 +30,9 @@ For geocoding, [Geoapify's free tier](https://www.geoapify.com/pricing/) is a ca
 
 ## Authentication without email delivery
 
-Username/password signup and login remove the sending-service and verified-domain dependency from local authentication. No email is required for the proposed local account model. Password hashing, throttling, credential changes, recovery, and session revocation are now backend responsibilities within the free runtime's capacity.
+Google and Apple provide sign-in and their own account-recovery processes. NestJS verifies provider credentials, resolves internal identities, and owns application sessions. No local password hashing/reset, recovery codes, email sender, or email-domain purchase is in the MVP. Public display name is separate from sign-in identity.
 
-Finalize recovery without email and the retained social provider/callback scope in [Authentication decisions](./authentication-decisions.md). Do not assume that removing email-link login removes Google/Apple callbacks or provides a password recovery mechanism. Recovery codes are a proposal; they require secure generation, hashing, single-use consumption, and a clear lost-code policy if adopted.
+Finalize explicit identity linking/unlinking and session policy in [Authentication decisions](./authentication-decisions.md). Losing every linked provider leaves no independent app recovery channel. Validate social callbacks/native configuration within available provider hostnames and the zero-budget constraint. Email authentication can be proposed later if a domain and delivery setup are chosen; it is not a current dependency.
 
 The funded exception is store publication: [Apple Developer Program](https://developer.apple.com/programs/enroll/) lists 99 USD/year, with regional pricing, and [Google Play registration](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en) lists 25 USD once. Existing memberships can cover these costs. Use CI for native builds; no paid EAS subscription or new test hardware is included.
 
@@ -67,10 +67,8 @@ Durations below are product and operational proposals, not statutory retention p
 | Successful delivery payloads | 7 days | Keep minimal event IDs and outcomes; minimize retained push content |
 | Failed delivery diagnostics | 30 days | Redacted diagnostics for support; use bounded retries and surface permanent failure |
 | Device push tokens | While installation is active | Unlink on logout, disable invalid tokens immediately, and purge after 90 days of inactivity |
-| Local password credential | While the account has local login enabled | Store an Argon2id hash only; remove superseded hashes on change and purge with accepted account deletion |
-| Recovery codes if adopted | Validity and cleanup to be confirmed with recovery policy | Hashes only; atomic single use; regeneration revokes earlier codes |
 | Authentication session and refresh hashes | Proposed 30-day inactivity limit; minimal revoked/expired records for 30 further days | Preserve only what is required for rotation/reuse detection and security investigation |
-| Application/security logs | 30 days | Exclude exact locations, passwords/hashes, recovery codes, tokens, and unnecessary profile data |
+| Application/security logs | 30 days | Exclude exact locations, provider credentials, authorization codes, tokens, and unnecessary profile data |
 | Closed abuse reports | 180 days after closure | Restricted operator access; review open cases every 30 days and justify longer retention individually |
 | Backups | Proposed rolling maximum 30 days for any copies we keep | A retention ceiling, not a promise of 30-day managed recovery; use only included history/snapshots or encrypted exports to existing private storage |
 | Test fixtures and failure artifacts | Synthetic fixtures per run; diagnostics 7 days | Isolate test data and redact secrets; no production database copies in public CI |
@@ -85,7 +83,7 @@ Neon Free currently provides a limited 6-hour instant-restore window, bounded by
 | --- | --- |
 | API unit | Jest and NestJS TestingModule, with isolated adapters |
 | API integration | Real PostgreSQL/PostGIS containers on Linux GitHub Actions runners; migrate empty and previous supported schemas |
-| API HTTP E2E | Supertest against the real NestJS app/database; real local credential verification, with controlled push, geocoding, and social-auth boundaries |
+| API HTTP E2E | Supertest against real NestJS/database and provider-token verification, with controlled push, geocoding, and social issuer boundaries |
 | App unit/integration | Jest with jest-expo and React Native Testing Library; test initial snapshots and direct push-cache updates without hidden refetches |
 | Android E2E | Maestro on a standard Linux runner with an emulator and an identified native build |
 | iOS E2E | Maestro on a standard macOS/Xcode runner with a simulator; explicit device smoke tests for provider sign-in and push |
@@ -97,4 +95,4 @@ Accepted coverage gates are 80% statements/functions/lines and 75% branches for 
 
 Run API unit/integration/HTTP E2E on relevant API PRs. Run app unit/integration and Android E2E smoke on app PRs, with iOS smoke for authentication, native, navigation, and permission changes. Run the full Android/iOS regression on integrated dev and release candidates. Public fork PRs use synthetic data and no cloud, signing, or production credentials. Add real check names to branch rulesets only after those jobs exist and reliably report results.
 
-Zero spending, test infrastructure, and coverage gates are confirmed alongside the product and provider decisions. The 18+ policy, retention periods, auth recovery/linking/session choices, durable delivery adapter, and supplemental free backup setup remain open. Confirm library versions against the scaffold without changing accepted test levels or introducing paid infrastructure.
+Zero spending, tests/coverage, and social-only auth are confirmed alongside product/provider choices. The 18+ policy, retention, linking/session rules, callback setup, durable delivery adapter, and supplemental free backups remain open. Confirm compatible SDK versions without changing test levels or introducing paid infrastructure.
