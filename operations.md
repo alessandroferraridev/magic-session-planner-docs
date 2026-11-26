@@ -1,6 +1,14 @@
-# Operating policy: budget, audience, delivery, and retention
+# Operations
 
-Status: accepted on 26 November 2026. The original filename is retained for existing links. The MVP is a personal, non-commercial project with zero infrastructure spending beyond app-store publication. These policies are decisions; resources, credentials, workflows, and restore drills still require implementation.
+Status: accepted on 26 November 2026. The MVP is a personal, non-commercial project with zero infrastructure spending beyond app-store publication. These policies are decisions; resources, credentials, workflows, and restore drills still require implementation.
+
+## Deployment and environments
+
+Deploy NestJS on Vercel and connect to Neon over TLS with a bounded connection pool. Use a direct migration connection where the selected migration tooling needs one, and execute migrations as a controlled release step rather than on every request. Validate the production PostgreSQL/PostGIS versions and transaction behavior in staging. [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs), [Neon pooling](https://neon.com/docs/connect/connection-pooling), and [Neon PostGIS](https://neon.com/docs/extensions/postgis) guide the setup.
+
+Use separate Vercel projects for staging and production, with separate Neon projects or equivalently isolated resources and credentials. Staging can use its own production deployment of `dev` to exercise scheduled jobs; preview deployments must not be assumed to run the production schedule. Gate production delivery from `main` on the release process and keep test notifications confined to test accounts. Verify current [scheduler behavior](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs) during implementation.
+
+Durable command, notification and scheduled-job execution is specified in [Delivery and recovery](./delivery-and-recovery.md). A failed compatibility or quota acceptance check blocks release within the zero budget. Provider registrations, policy publication and staging evidence are implementation tasks in the [roadmap](./development-roadmap.md).
 
 ## Free service baseline
 
@@ -11,7 +19,7 @@ Status: accepted on 26 November 2026. The original filename is retained for exis
 | Event execution | Vercel Workflow SDK with `@workflow/nest`, using included Hobby Workflows/Queues/Functions; no separate broker or notification polling |
 | Push | Expo push service with APNs/FCM credentials; best-effort delivery and an authoritative PostgreSQL inbox |
 | Geocoding/maps | Geoapify Free for worldwide address/city resolution and tiles; MapLibre React Native with Geoapify `osm-bright` style and visible Geoapify/data-source attribution |
-| Authentication | Direct Google/Apple integrations and NestJS-owned sessions as specified in [Authentication decisions](./authentication-decisions.md) |
+| Authentication | Direct Google/Apple integrations and NestJS-owned sessions as specified in [Authentication](./authentication.md) |
 | Native builds/CI | Local Android builds and standard GitHub Actions Linux/macOS runners for public repos; signing on trusted release jobs only; no paid EAS or larger runners |
 | Backup/monitoring | Included Neon instant restore plus manual encrypted local exports; provider dashboards and redacted logs, no paid observability service |
 | Public information | Bilingual privacy/community/support and deletion-request information on the free docs GitHub Pages site; actual authenticated account deletion in-app |
@@ -28,17 +36,11 @@ App map keys are public and limited to map usage/quota; private geocoding and pr
 
 Store publication is the funded exception: [Apple Developer Program](https://developer.apple.com/programs/enroll/) and [Google Play registration](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en). No extra hardware or paid build plan is assumed.
 
-## Delivery and maintenance
+## Moderation and support operations
 
-Use the durable protocol in [Delivery and recovery](./delivery-and-recovery.md). The official [NestJS Workflow integration](https://workflow-sdk.dev/docs/getting-started/nestjs) supports Vercel and is currently beta; pin/test it and its generated consumer deployment. This is the selected implementation with a staging acceptance gate, not another provider-selection question. Failed compatibility/quota checks block release, never authorize paid fallback.
+Audience, age declaration, permitted host profiles and private-home support are defined in [Product scope](./product-scope.md#audience-and-hosting).
 
-Only IDs enter workflow history; encrypted transient command input and safe notifications live in Neon. Accept a durable run before business changes, make transactions idempotent, and retry dispatch without periodic notification-table scans. Clients load one entry/re-entry snapshot and apply push projections without per-push reads. Use versioned scheduled completion and a protected daily maintenance invocation at 03:00 UTC, bounded batches with durable continuations. Previews never use production credentials; staging pushes go only to test accounts.
-
-## Audience and minimum safety operations
-
-Personal-account Magic players aged 18+ worldwide. Require self-declaration and versioned policy acknowledgement, not birth dates or IDs; this is not verified age. Private homes are supported in the pilot/MVP with city-only discovery and approval-gated precise detail. No store profiles, payments, advertisements, tournament brackets, or child-directed flows.
-
-Provide in-app reporting, a published private support route, and an operator CLI to review reports, disable accounts and cancel unsafe sessions. Restricted operator credentials and actor/reason/time auditing are required; public profile ownership grants no operator access. Review reports daily during the pilot, targeting first response within 72 hours without promising 24/7 coverage. Never accept sensitive reports in public GitHub issues. Publishing policy text and an actual private support contact before invitations is a release task, not an open audience decision.
+Provide the published private support route and operator CLI for report review, account disable and unsafe-session cancellation. Restrict operator credentials, record actor/reason/time and never derive operator permission from public profile ownership. Review reports daily during the pilot, targeting first response within 72 hours without promising 24/7 coverage. Sensitive reports must not use public GitHub issues. Publish the actual private support contact and policy pages before invitations.
 
 ## Retention schedule
 
@@ -72,7 +74,7 @@ Maintenance rechecks the current lifecycle/version and end/cancel time before pu
 
 Provider-managed backups/logs may not be individually erasable. Document those limits; row deletion does not instantly erase backups. On restore keep traffic disabled, replay the current deletion ledger and time-based retention, invalidate restored auth/push credentials, and only then reopen. Never revive a deleted account or send old queued notifications.
 
-## Backup and recovery decision
+## Backup and recovery
 
 Use included Neon instant restore first: up to six hours bounded by change volume, a restore window rather than a six-hour RPO guarantee. Automated snapshot schedules are paid; a manual-snapshot count limit does not establish free snapshot storage. The zero-cost baseline does not depend on managed snapshots or a 30-day managed recovery service. See [Neon recovery/snapshot limits](https://neon.com/docs/introduction/plans).
 
@@ -82,10 +84,6 @@ Update an encrypted copy of the minimal deletion ledger after each completed del
 
 Before the pilot and every three months, restore into a private isolated database, apply ledger/retention, validate schema/relationships, and record only a redacted drill result. Pilot recovery target: one working day once operator/copy are available; fallback export data may be seven days old if weekly exports succeeded. Missed duties, hardware loss, provider failure, or exhausted quota can increase loss/outage. These limitations are accepted for this zero-budget pilot; independent automated disaster recovery is outside the funded MVP, not an open product decision.
 
-## Accepted test infrastructure
+## CI costs
 
-Use Jest/NestJS TestingModule, real PostGIS containers and Supertest on standard Linux GitHub Actions; jest-expo/React Native Testing Library; Maestro on Linux Android emulators and standard macOS/Xcode simulators. Controlled issuer tests keep verification real; real social-provider and APNs/FCM checks remain release tasks. Trusted staging smoke tests verify Vercel/Neon compatibility.
-
-[Standard runner compute is free for public repos](https://docs.github.com/en/billing/concepts/product-billing/github-actions). Keep the three repos public; bound sanitized artifacts to included storage and at most seven days, cancel superseded runs, and expose no production credentials to forks. Coverage remains 80% statements/functions/lines, 75% branches and 90% branches for critical auth/participation/location authorization. Do not exclude business code to pass. Add real required check names only when working jobs exist. Full scenarios/triggers remain in [Testing strategy](./testing-strategy.md).
-
-The only unresolved product choice is the [initial format catalogue](./open-decisions.md). Registrations, measurements, implementation, policy publication, and restore drills are acceptance tasks, not undecided architecture.
+The [testing strategy](./testing-strategy.md#accepted-implementation-tools) owns runner choices, public-repository constraints, test artifacts, coverage and CI gates. Apply those constraints within the zero-spending policy above.

@@ -21,7 +21,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Local services | Docker Compose | Reproducible PostgreSQL and PostGIS development environment |
 | CI | GitHub Actions standard runners, confirmed | Linux for API/Android and macOS for iOS; public repositories and included storage only |
 
-Use npm and supported stable versions compatible with Expo/NestJS, pinned in lockfiles during scaffolding. Use Expo development builds, not Expo Go, for native authentication/maps. Geoapify Free supplies geocoding/city resolution and the osm-bright map style; MapLibre React Native renders approved-detail maps. See the [operating policy](./operational-proposal.md) for quotas, attribution and privacy. Use i18next/react-i18next with Expo Localization, expo-secure-store, Nest ValidationPipe/class-validator, nestjs-pino structured redacted logging, and standard GitHub Actions. Dependency patch selection is an implementation task, not an open architecture decision.
+Use npm and supported stable versions compatible with Expo/NestJS, pinned in lockfiles during scaffolding. Use Expo development builds, not Expo Go, for native authentication/maps. Geoapify Free supplies geocoding/city resolution and the osm-bright map style; MapLibre React Native renders approved-detail maps. See the [operating policy](./operations.md) for quotas, attribution and privacy. Use i18next/react-i18next with Expo Localization, expo-secure-store, Nest ValidationPipe/class-validator, nestjs-pino structured redacted logging, and standard GitHub Actions. Dependency patch selection is an implementation task, not an open architecture decision.
 
 ## System boundaries
 
@@ -35,21 +35,11 @@ flowchart LR
     API -->|Durable delivery work| Push[Push notification provider]
 ```
 
-The API validates its own application access tokens. Google and Apple credentials are verified during social sign-in, then exchanged for our application session. Cache external public verification keys according to their providers' guidance. Store app tokens in device secure storage and enforce authorization rules on the API.
+Google and Apple authenticate the external identity; the API owns application authorization. The authentication specification defines credential verification and device token storage.
 
-## Confirmed authentication methods
+## Authentication boundary
 
-Support Google and Apple sign-in only. NestJS verifies provider credentials, creates or resolves an internal UUID, and issues application sessions. Public display name is separate profile data. No local usernames/passwords, email login, or local recovery code service is in the MVP. See [Authentication decisions](./authentication-decisions.md).
-
-- Resolve users by unique external issuer/subject identities, never public display name or matching email. New verified identities create profiles or follow an explicit reauthenticated linking policy.
-- Integrate Google and Apple using maintained authentication libraries and their supported flows. Validate issuer, audience, signature, expiry, and transaction state or nonce; apply PKCE where the selected authorization-code flow supports it. Keep privileged credentials on the API.
-- Issue short-lived application access tokens and rotating refresh tokens linked to a server-side authentication session. Store refresh token hashes, track rotation and reuse, and support revocation and logout from one or all devices.
-- Rate-limit social initiation/exchange and refresh operations. Redact provider credentials, authorization codes, and tokens from logs and analytics.
-- Handle unavailable/throttled providers, cancelled sign-in, failed callbacks, and revoked sessions before updating signed-in state. Social methods can require callbacks or URL schemes even without email login.
-
-Use the accepted [authentication implementation](./authentication-decisions.md): native Google on both platforms, native Apple on iOS and browser Apple on Android; explicit fresh-proof linking, 15-minute access tokens, rotating refresh with 30-day inactivity/90-day absolute limits, immediate session checks and 90-day signing-key rotation. No account merging or last-provider unlink. Require 18+ onboarding before product access.
-
-Use established authentication libraries and maintain their security tests. Reference [NestJS authentication](https://docs.nestjs.com/security/authentication), [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html), and the selected provider SDK documentation.
+NestJS verifies Google/Apple credentials and owns internal users, authorization and application sessions. The complete platform/library, onboarding, linking, token, key and revocation specification is in [Authentication](./authentication.md).
 
 ## Backend modules
 
@@ -65,35 +55,17 @@ Use established authentication libraries and maintain their security tests. Refe
 
 Controllers validate requests, guards enforce access, and services own business rules. Database transactions span session changes, participation, in-app notifications, and delivery event records. Keep the API a modular monolith without self-hosted Redis, microservices, or websockets; use the selected Vercel Workflow/Nest adapter and prove its recovery contract before pilot.
 
-## Vercel deployment and scheduled work
+## Runtime and asynchronous boundaries
 
-Deploy NestJS on Vercel and connect to Neon over TLS with a bounded connection pool. Use a direct migration connection where the selected migration tooling needs one, and execute migrations as a controlled release step rather than on every request. Validate the production PostgreSQL/PostGIS versions and transaction behavior in staging. [Vercel NestJS support](https://vercel.com/docs/frameworks/backend/nestjs), [Neon pooling](https://neon.com/docs/connect/connection-pooling), and [Neon PostGIS](https://neon.com/docs/extensions/postgis) guide the setup.
+NestJS runs as bounded Vercel Functions against Neon PostgreSQL/PostGIS. Environment isolation, database connections, migrations, regions and quota constraints are defined in [Operations](./operations.md#deployment-and-environments).
 
-Use Vercel Hobby and Neon Free with included resources and no paid fallback. Validate Hobby eligibility, quotas, durable recovery, and social callback configuration with available provider hostnames. Quota exhaustion can suspend service; global support is not unlimited free capacity. No email sending domain is needed by the social-only account model. See the [operating constraints](./operational-proposal.md).
-
-Use Vercel Workflow SDK with @workflow/nest for event execution and Expo for push, as specified in [Delivery and recovery](./delivery-and-recovery.md). Pin the beta Nest integration and deploy its generated consumer through the documented Vercel build output. No permanent process, in-memory timer or periodic notification-table scan supplies durability.
-
-Prepare an encrypted command in Neon, accept a durable workflow before business mutations, then commit idempotent business state, notifications and delivery records in one transaction. Resume dispatch after crashes; commands return a result or 202/pending without polling. Session-end jobs use a separate completionGeneration and expected end time, so unrelated participation/version changes cannot invalidate the only completion job. Daily 03:00 UTC maintenance handles retention in bounded batches; it never dispatches notification-table scans. Staging must prove crash recovery and free-plan behavior before launch.
-
-Use separate Vercel projects for staging and production, with separate Neon projects or equivalently isolated resources and credentials. Staging can use its own production deployment of `dev` to exercise scheduled jobs; preview deployments must not be assumed to run the production schedule. Gate production delivery from `main` on the release process and keep test notifications confined to test accounts. Verify current [scheduler behavior](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs) during implementation.
-
-## Session edits and notifications
-
-All editable session business fields can be changed by the personal-account host, including venue, time, format, capacity, and host participation. Apply the edit under the same session row lock as approvals, check the resulting confirmed count, and increment a version to reject stale concurrent edits. A host opting out withdraws their player membership but retains ownership; opting in approves their membership only if a seat is available.
-
-Create the affected recipients' in-app notifications and delivery event records in that transaction. Use safe versioned payloads containing event and notification IDs, session ID, aggregate version, event type, and a complete small projection of the public status/count/time/city and recipient-membership fields updated by the listener. Increment the aggregate version for every state-changing session or participation operation, not only host edits. Avoid partial patches that lose an earlier field update when a newer event arrives first. Keep payloads within the chosen push provider's size limit and exclude exact addresses, coordinates, credentials, and long user-authored content. Recheck authorization when the user requests protected location detail. Session location snapshots or owned venue revisions keep edits from silently relocating unrelated games.
-
-Required events cover requests, approvals, rejections, withdrawals, cancellations, material session edits, completion, moderation and account/security changes. Push dispatch records tickets and receipts, retries transient failures, disables invalid device tokens, and tolerates duplicate delivery. The in-app inbox remains authoritative if push is denied or delayed. Store no exact address in push text. [Expo documents its delivery semantics](https://docs.expo.dev/push-notifications/faq/).
-
-Load the notification inbox and personal-session snapshot once on authenticated app entry. In the foreground, the push listener deduplicates event IDs, rejects older aggregate versions, and patches the query cache and inbox directly; it does not refetch the inbox, session, or database on every push. Mutation responses also update local state. Clear cached exact locations immediately on a revocation or cancellation event, and never grant protected location access from a push alone.
-
-Push delivery is best-effort and background apps may not execute a listener. Use one reconciliation snapshot on launch, login, or foreground re-entry, plus explicit user refresh, to recover missed events. This is event-based recovery, not timed polling. With push disabled, the inbox remains available through those one-shot reads; real-time updates are not promised without a delivery channel. Opening an authorized map or another uncached detail still performs its normal protected API request.
+The selected Vercel Workflow/Nest adapter executes durable commands and scheduled jobs. Its acceptance-before-mutation contract, generated consumer deployment, pending responses, completion generation and no-polling push/cache behavior are specified in [Delivery and recovery](./delivery-and-recovery.md). Seat locks, version conflicts and protected location snapshots are specified in [Data and API](./data-and-api.md).
 
 ## Mobile modules
 
 Organize code by authentication, discovery, sessions, hosting, participation, and profile. Keep navigation routes small and place API access, secure token storage, and location services behind shared adapters.
 
-The API is authoritative for capacity and membership. Apply command responses and received push projections to the cache directly; do not invalidate active queries in a way that causes a read for every push. Load uncached detail on explicit navigation and use one-shot entry/re-entry recovery. An optimistic UI must never show a confirmed seat before server approval. Avoid persistent caching of exact locations and clear sensitive query data when signing out or losing access.
+The API is authoritative for capacity and membership. Mobile adapters implement the [notification/cache contract](./delivery-and-recovery.md#notification-contract); an optimistic UI never confirms a seat before server approval. Precise locations stay in memory only, with cleanup on access loss or logout.
 
 ## Geographic search
 

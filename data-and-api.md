@@ -60,7 +60,7 @@ Every operation affecting capacity or eligibility acquires that session lock fir
 
 ## REST endpoints
 
-All routes below use `/v1`, except health. Contracts use the accepted [authentication implementation](./authentication-decisions.md); route-level implementation is still required.
+All routes below use `/v1`, except health. Contracts use the accepted [authentication implementation](./authentication.md); route-level implementation is still required.
 
 | Method and route | Purpose and access |
 | --- | --- |

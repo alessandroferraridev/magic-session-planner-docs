@@ -10,7 +10,7 @@ Unit, integration, and E2E tests are required for both API and app. Implement th
 - Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Include private homes and require 18+ self-declaration; the invited pilot must not establish a regional product restriction.
 - Use Google/Apple-only sign-in with NestJS-issued application sessions and a separate public profile name. Apply accepted linking/session/SDK/identifier/callback rules. Provision provider registrations, Frankfurt Vercel/Neon resources, Geoapify Free and MapLibre development builds.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
-- Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; implement accepted retention, audience, durable delivery, and manual encrypted backup duties in the [operating constraints](./operational-proposal.md). No email sender or local credentials are required.
+- Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; implement accepted retention, audience, durable delivery, and manual encrypted backup duties in the [operations](./operations.md). No email sender or local credentials are required.
 
 **Complete when:** [Open decisions](./open-decisions.md) contains only initial formats. All other policies are accepted; independent scaffolding can proceed now. Format-specific publishing/filter fixtures wait for the initial catalogue.
 
@@ -37,7 +37,7 @@ App tasks:
 - Scaffold React Native with Expo, TypeScript, and routing.
 - Establish navigation, accessible shared controls, theme tokens, loading states, and error states.
 - Establish English and Italian translation catalogs, locale-aware formatting, a language setting, and a persisted preference. Keep locale independent of session geography and timezone.
-- Configure API base URLs, TanStack Query, secure storage, environment examples, and basic CI.
+- Configure API base URLs, TanStack Query, secure storage, environment examples, and basic CI. Provision the chosen app/service identifiers, Google/Apple clients, signing fingerprints, APNs/FCM credentials and Geoapify keys; stable staging/production Vercel hostnames are provisioning outputs.
 - Document simulator and physical device setup, including API access over the local network.
 - Configure Jest with jest-expo, React Native Testing Library, and Maestro. Establish unit and integration examples and an installed-app smoke flow against the real test API; document Android and iOS execution prerequisites.
 
@@ -108,7 +108,7 @@ Depends on step 4 and the durable-command prototype from step 1.
 
 Depends on steps 1 through 5.
 
-- Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
+- Run the scenario matrix in [Testing strategy](./testing-strategy.md#required-scenario-coverage) and collect the evidence required by [Quality and release](./quality-and-release.md), including Android/iOS journeys, real-provider sign-in, push and location denial.
 - Add the restricted operator CLI, reporting response/audit, daily bounded retention jobs, account deletion/ledger, and bilingual privacy/community/support/deletion information on GitHub Pages.
 - Deploy Frankfurt staging on Vercel with Neon/PostGIS; validate both social flows on both platforms, geocoding/maps, migrations, free quotas, Workflow consumer/crash recovery, redaction and real push. Implement encrypted weekly/pre-migration local exports and complete a private restore/ledger drill.
 - Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
