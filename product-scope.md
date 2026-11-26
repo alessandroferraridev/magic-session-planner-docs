@@ -16,12 +16,12 @@ The first release helps individuals arrange an in-person Magic: The Gathering ga
 - The interface supports English and Italian. Language selection is independent of where a session is hosted.
 - API and app development must include unit, integration, and E2E tests, implemented alongside their features from the initial scaffold. See the [testing strategy](./testing-strategy.md).
 
-## Working MVP assumptions
+## Additional accepted scope and initial formats
 
-These are proposed defaults until the questions in [Open decisions](./open-decisions.md) are answered.
+All scope below is accepted except the initial format catalogue, the only [open decision](./open-decisions.md).
 
-- Commander is the first supported format. Store the format as an extensible value for later additions.
-- The app uses foreground location only.
+- Initial formats remain undecided: Commander only or an explicit multi-format catalogue. Store formats as stable extensible catalogue codes; examples do not select launch formats.
+- The app uses foreground location only. The audience is 18+ worldwide by self-declaration; private-home sessions are included. Launch is personal/non-commercial and free to use, without paid features or advertising.
 - Account access is required to browse and participate. Payments, chat, competitive matchmaking, deck management, ratings, and tournament brackets are outside the MVP.
 
 ## Global availability and interface languages
@@ -57,7 +57,7 @@ Capacity can be changed but cannot fall below the resulting confirmed player cou
 
 ### Manage participation
 
-Players can see hosted sessions and their pending or confirmed sessions, withdraw a pending request, and leave a confirmed session before it starts. Leaving immediately frees a seat. Hosts keep management rights when they opt out of playing and can opt back in while a seat is available. Ownership transfer and removing another confirmed player are separate from editing session fields and remain deferred working assumptions.
+Players can see hosted sessions and their pending or confirmed sessions, withdraw a pending request, and leave a confirmed session before it starts. Leaving immediately frees a seat. Hosts keep management rights when they opt out of playing and can opt back in while a seat is available. Ownership transfer and host removal of an individual confirmed player are outside the MVP. Players retain reporting and withdrawal flows, and the operator can cancel unsafe sessions.
 
 The app loads an initial notification and personal-session snapshot. Push listeners update local UI state directly using safe versioned event payloads for requests, decisions, cancellations, and material edits, without a backend read for every push. Opening protected precise detail remains an authorized user action. Reconcile once when entering or returning to the app, or on explicit refresh, to recover missed pushes. Denied push permission does not block participation or erase persisted notifications; immediate updates then wait for a one-shot refresh.
 
@@ -65,21 +65,21 @@ The app loads an initial notification and personal-session snapshot. Push listen
 
 | Rule | MVP behavior |
 | --- | --- |
-| Lifecycle | Draft, published, cancelled, completed |
+| Lifecycle | Draft, published, cancelled, completed; cancelled/completed history is terminal. Duplicate into a new draft for another game |
 | Full table | Derived from confirmed participation and capacity; not a separate lifecycle state |
 | Availability | Published, starts in the future, and confirmed players below capacity |
 | Join request | One request per player per session; every non-host player needs host approval |
 | Host participation | Default true at creation; host can later opt out to free a seat or opt in when capacity allows |
-| Host permissions | Session ownership grants management access independently of player membership |
+| Host permissions | Ownership grants management independently of playing status; all business fields remain editable in draft/published active sessions, with valid time/capacity |
 | Duplicate action | Retried requests must not create duplicate membership or allocate another seat |
-| Completion | At the scheduled end time, complete an active session through an idempotent scheduled job |
+| Completion | End-time authorization applies immediately; an idempotent scheduled job persists completion using a separate completion generation, unaffected by seat changes |
 | Joining cutoff | Requests and approvals stop at the session start time |
 | Location visibility | City only in discovery and before approval; exact address and map only for the host and active approved participants in active session detail |
-| Time | Store UTC instants and the venue's IANA timezone; display the timezone on session details |
+| Time | Store UTC instants and venue IANA timezone; display venue time and zone. Capacity 2-16; publishing requires a future start/end and a configured format |
 
 ## Required mobile screens
 
-1. Sign in with Google or Apple and create a profile on first verified access, with a separate public display name and clear cancellation/callback errors.
+1. Sign in with Google or Apple, complete the 18+ declaration/policy acknowledgement and public display name on first access; settings include linked providers, sessions and logout controls.
 2. Current location explanation, permission handling, settings recovery, and retry.
 3. Nearby session list and filters.
 4. Session detail and participation state, including protected precise location and map after approval.
@@ -93,7 +93,7 @@ The app loads an initial notification and personal-session snapshot. Push listen
 - A player can discover a published session within a selected area, request a seat, and see its approval from a second account.
 - A host can publish and cancel a session, approve requests, and inspect the current confirmed player count.
 - Creating a four-player session with the default playing host leaves three available seats; choosing only to provide the table leaves four. The host can manage the session in both cases.
-- Google and Apple sign-in resolve the correct internal account, create a profile on first access, and work through validated native/browser callbacks on the agreed platforms. Public names and provider email matches never grant access to another profile.
+- Google and Apple work on iOS/Android via the accepted native/browser flows, enforce 18+ onboarding, resolve returning users and safely link/unlink providers. Matching names/emails never grant another profile access; logout/deletion revoke access immediately.
 - A full, cancelled, completed, or already-started session cannot accept new participants.
 - Concurrent approvals for the final seat result in exactly one successful approval.
 - Location denial explains how to enable location and retry; nearby search never silently uses a default or manually selected destination.

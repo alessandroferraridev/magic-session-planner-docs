@@ -1,18 +1,18 @@
 # Development roadmap
 
-Deliver one usable flow at a time: create a session, find it nearby, then confirm a seat. Each step ends with a concrete completion check. The order below expresses dependencies; dates should be estimated after the initial scaffold and provider choices.
+Deliver one usable flow at a time: create a session, find it nearby, then confirm a seat. Each step ends with a concrete completion check. The order below expresses dependencies; dates should be estimated after the initial scaffold and quota/compatibility measurements.
 
 Unit, integration, and E2E tests are required for both API and app. Implement the relevant scenarios with each feature using the [testing strategy](./testing-strategy.md); testing is part of each step's completion criteria.
 
-## Step 0 Resolve the product decisions
+## Step 0 Close the initial formats and apply accepted decisions
 
 - Use personal profiles for all hosts, host approval, editable session fields, and host participation that defaults to playing and can be changed later. Confirm the initial formats.
-- Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Confirm whether the pilot includes private homes; the pilot must not establish a regional product restriction.
-- Use Google/Apple-only sign-in with NestJS-issued application sessions and a separate public profile name. Finalize linking/unlinking, session rules, provider registrations, and native/browser callbacks. Configure Vercel and Neon/PostGIS; select geocoding and detail-map providers.
+- Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Include private homes and require 18+ self-declaration; the invited pilot must not establish a regional product restriction.
+- Use Google/Apple-only sign-in with NestJS-issued application sessions and a separate public profile name. Apply accepted linking/session/SDK/identifier/callback rules. Provision provider registrations, Frankfurt Vercel/Neon resources, Geoapify Free and MapLibre development builds.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
-- Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; confirm retention, audience, durable delivery, and backups in the [operating constraints](./operational-proposal.md). No email sender or local credentials are required.
+- Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; implement accepted retention, audience, durable delivery, and manual encrypted backup duties in the [operating constraints](./operational-proposal.md). No email sender or local credentials are required.
 
-**Complete when:** [Open decisions](./open-decisions.md) records the answers needed for implementation, and the MVP scope is agreed. Independent scaffolding can proceed using the documented defaults.
+**Complete when:** [Open decisions](./open-decisions.md) contains only initial formats. All other policies are accepted; independent scaffolding can proceed now. Format-specific publishing/filter fixtures wait for the initial catalogue.
 
 ## Step 1 Establish the two projects
 
@@ -28,7 +28,7 @@ Backend tasks:
 - Scaffold NestJS with strict TypeScript, linting, formatting, unit test support, and a supported Node.js version.
 - Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
-- Validate Vercel Hobby, Neon Free/PostGIS, small pools, migrations, isolated environments, and provider callback configuration. Verify durable event delivery/commit recovery within free quotas without polling or paid metering.
+- Validate Vercel Hobby, Neon Free/PostGIS, small pools, migrations, isolated environments, and provider callback configuration. Prototype the selected Workflow/Nest Vercel consumer, durable command acceptance and crash recovery within free quotas, including 202/pending UI behavior without polling. Failed technical acceptance blocks launch, not a new product vote.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
 - Configure Jest, NestJS TestingModule, PostgreSQL/PostGIS integration fixtures, and a Supertest HTTP E2E suite. Start with meaningful configuration or validation unit checks, migration integration checks, and API readiness over HTTP against the test database.
 
@@ -39,18 +39,18 @@ App tasks:
 - Establish English and Italian translation catalogs, locale-aware formatting, a language setting, and a persisted preference. Keep locale independent of session geography and timezone.
 - Configure API base URLs, TanStack Query, secure storage, environment examples, and basic CI.
 - Document simulator and physical device setup, including API access over the local network.
-- Configure Jest with jest-expo, React Native Testing Library, and a native E2E runner. Establish unit and integration examples and an installed-app smoke flow against the real test API; document Android and iOS execution prerequisites.
+- Configure Jest with jest-expo, React Native Testing Library, and Maestro. Establish unit and integration examples and an installed-app smoke flow against the real test API; document Android and iOS execution prerequisites.
 
 **Complete when:** both projects have runnable unit, integration, and E2E suites and pass the initial CI gates. The API reports database readiness, and Android and iOS test builds load a screen and call the real test API. Framework and test setup start here; they are not part of repository initialization.
 
 ## Step 2 Add identity and profiles
 
-Depends on step 1, compatible social SDKs, linking/session policy, provider registration, and platform callback configuration.
+Depends on step 1 and provisioning the accepted provider registrations/platform callbacks; auth policies and SDK choices are already accepted.
 
-- Implement Google and Apple through native SDKs or validated browser flows for each platform; first verified sign-in creates the internal profile.
+- Implement Google and Apple through native SDKs or validated browser flows for each platform; first verified sign-in creates the internal profile, followed by 18+ declaration/policy acknowledgement and a separate public name.
 - Localize sign-in, profile onboarding, cancellation, callback errors, and provider recovery guidance in English and Italian.
 - Add issuer/subject identity uniqueness, application user/profile, authentication session, and refresh token migrations. Use shared throttling, token verification, rotation/reuse detection, and device/global logout.
-- Handle invalid/replayed provider credentials, identity collisions, throttling, cancelled sign-in, and failed callbacks. Implement explicit linking/unlinking after policy confirmation; do not add local passwords or reset codes.
+- Handle invalid/replayed provider credentials, identity collisions, throttling, cancelled sign-in, and failed callbacks. Implement explicit linking/unlinking, last-provider protection, fresh verification, 18+ onboarding and immediate session revocation; do not add local passwords or reset codes.
 - Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
 - Implement profile read and update, account state checks, and authentication guards.
 - Add auth tests for provider signature/issuer/audience/nonce validation, replay, identity uniqueness, safe display-name collisions, throttling, linking ownership, refresh reuse, revocation, and cross-account access.
@@ -62,7 +62,7 @@ Depends on step 1, compatible social SDKs, linking/session policy, provider regi
 Depends on step 2.
 
 - Implement venue, protected venue location, session, and participation migrations and constraints.
-- Add venue forms with public versus private visibility and a public preview.
+- Add venue forms with public-space/private-home categories and a city-only preview; both categories protect exact location equally.
 - Support worldwide venue locations and international address formats, with timezone selection tied to the venue rather than the interface language or device timezone.
 - Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
 - Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
@@ -75,13 +75,13 @@ Depends on step 2.
 
 ## Step 4 Discover nearby tables
 
-Depends on step 3 and geocoder selection.
+Depends on step 3 and the configured Geoapify Free adapter.
 
 - Add geographic indexes and parameterized radius, date, format, and available-seat queries.
 - Implement one-time current foreground location lookup, permission explanation, settings recovery, and retry. Do not implement a manual discovery destination.
 - Resolve canonical cities worldwide and support host venue positioning separately. Discovery and unapproved detail expose only the city; precise coordinates are not used for pre-approval filtering or ranking.
-- Build the nearby list, filters, pagination, refresh, approximate distance labels, and no-results state.
-- Redact search coordinates from logging at the application and proxy layers.
+- Build the nearby list, filters, pagination, explicit refresh and no-results state, without distance labels or secret-coordinate ranking.
+- Use body-based POST discovery and disable body logging so platform access URLs do not contain coordinates; verify redaction at application/proxy/provider boundaries.
 - Measure geographic query plans with representative data and verify units and coordinate ordering.
 - Add real PostGIS city-search cases, HTTP E2E privacy assertions for all venue types, app integration state handling, and native location denial/retry coverage.
 - Include both interface locales, multiple hemispheres, high latitudes, and searches across the antimeridian in the relevant automated scenarios.
@@ -90,14 +90,14 @@ Depends on step 3 and geocoder selection.
 
 ## Step 5 Request and confirm seats
 
-Depends on step 4.
+Depends on step 4 and the durable-command prototype from step 1.
 
 - Implement membership transitions and locking transactions for approvals and capacity changes.
 - Build request, withdraw, approve, reject, and personal-session screens.
-- Refresh server state after mutations and display useful conflict messages if the last seat is taken.
+- Apply committed mutation responses directly; show pending for accepted asynchronous commands and useful conflict states for the last seat. Use only explicit/entry recovery reads, no polling or per-push refetch.
 - Restrict exact location access to eligible confirmed players and the host.
 - Render the precise location map only in authorized detail after approval and clear cached location on revocation or cancellation.
-- Add the scheduled completion job and cancellation history.
+- Add completion-generation jobs and terminal cancellation/completion history; unrelated membership versions must not suppress completion.
 - Add in-app notifications, push token registration and permission handling, event-triggered delivery, and safe versioned payloads. Fetch an initial snapshot, patch UI directly from received pushes, and reconcile on app entry or explicit refresh without polling or per-push refetches.
 - Cover durable delivery retries/crash recovery, duplicate/out-of-order payloads, push denial, authorized navigation from notification taps, and absence of background refresh requests.
 - Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
@@ -109,8 +109,8 @@ Depends on step 4.
 Depends on steps 1 through 5.
 
 - Run the complete regression matrix in [Quality and release](./quality-and-release.md), including the suites implemented in earlier steps, Android and iOS device journeys, real-provider sign-in smoke checks, and location denial.
-- Add reporting, a minimal operator workflow, account deletion processing, and published privacy and support information.
-- Deploy staging on Vercel with Neon/PostGIS; validate Google/Apple sign-in, migrations, backup recovery, redaction, and event-triggered push delivery.
+- Add the restricted operator CLI, reporting response/audit, daily bounded retention jobs, account deletion/ledger, and bilingual privacy/community/support/deletion information on GitHub Pages.
+- Deploy Frankfurt staging on Vercel with Neon/PostGIS; validate both social flows on both platforms, geocoding/maps, migrations, free quotas, Workflow consumer/crash recovery, redaction and real push. Implement encrypted weekly/pre-migration local exports and complete a private restore/ledger drill.
 - Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 

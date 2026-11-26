@@ -1,98 +1,91 @@
-# Operating constraints retention audience and test infrastructure
+# Operating policy: budget, audience, delivery, and retention
 
-The product owner has selected Vercel for NestJS, Neon for PostgreSQL/PostGIS, and Google/Apple-only sign-in. There are no local passwords, login usernames, email delivery service, or local recovery flow. Infrastructure spending is zero beyond store publication. Tests and coverage are accepted; retention, audience, identity linking/session rules, and the durable delivery adapter still have open choices. No service account or billing setting is provisioned by this documentation.
+Status: accepted on 26 November 2026. The original filename is retained for existing links. The MVP is a personal, non-commercial project with zero infrastructure spending beyond app-store publication. These policies are decisions; resources, credentials, workflows, and restore drills still require implementation.
 
-## Confirmed zero infrastructure budget
+## Free service baseline
 
-Use free tiers and existing resources only, with no subscription, paid overage, trial that converts to payment, new domain purchase, larger runner, or paid build service. App-store publication is the only funded expense. Worldwide location support remains a product requirement; unlimited load or paid availability guarantees are not implied. Begin with a controlled pilot sized to measured free-tier usage rather than a promised user count.
+| Service | Accepted choice and boundary |
+| --- | --- |
+| API | Vercel Hobby, personal/non-commercial use only; separate staging/production projects and supplied HTTPS hostnames |
+| Database | Neon Free PostgreSQL/PostGIS, separate staging/production projects; pooled application connection, direct controlled migrations and scale-to-zero |
+| Event execution | Vercel Workflow SDK with `@workflow/nest`, using included Hobby Workflows/Queues/Functions; no separate broker or notification polling |
+| Push | Expo push service with APNs/FCM credentials; best-effort delivery and an authoritative PostgreSQL inbox |
+| Geocoding/maps | Geoapify Free for worldwide address/city resolution and tiles; MapLibre React Native with Geoapify `osm-bright` style and visible Geoapify/data-source attribution |
+| Authentication | Direct Google/Apple integrations and NestJS-owned sessions as specified in [Authentication decisions](./authentication-decisions.md) |
+| Native builds/CI | Local Android builds and standard GitHub Actions Linux/macOS runners for public repos; signing on trusted release jobs only; no paid EAS or larger runners |
+| Backup/monitoring | Included Neon instant restore plus manual encrypted local exports; provider dashboards and redacted logs, no paid observability service |
+| Public information | Bilingual privacy/community/support and deletion-request information on the free docs GitHub Pages site; actual authenticated account deletion in-app |
 
-| Item | Incremental cost | Free baseline and limits |
+No subscriptions, usage-billed upgrades, converting trials, new domains, paid storage, or automatic overages are authorized. Remain on non-billing free plans. Initial compute region is Frankfurt: Vercel `fra1` and Neon AWS `eu-central-1`. This is not a geographic product restriction or a worldwide latency promise.
+
+Limits checked on 26 November 2026: [Vercel Hobby](https://vercel.com/docs/plans/hobby.md), [Vercel terms](https://vercel.com/legal/terms), [Workflow pricing](https://vercel.com/docs/workflows/pricing), [Queues pricing](https://vercel.com/docs/queues/pricing), [Neon plans](https://neon.com/docs/introduction/plans), [Expo push](https://docs.expo.dev/push-notifications/faq/), and [Geoapify pricing/attribution](https://www.geoapify.com/pricing/). Recheck actual account allowances before deployment; these are limits, not app capacity promises.
+
+Plan around Neon Free's 100 CU-hours/project/month, 1 GB PostgreSQL/project and 5 GB public transfer/project/month. Workflow Hobby includes 50,000 events/month and 1 GB written, without extended retained workflow data; Queues includes 1,000,000 operations. Function/queue use also counts. Geoapify Free includes 3,000 credits/day and five requests/second; tile and address use share credits. Bound retries/fan-out, debounce host address lookup and avoid speculative map loading. Maps need an Expo development build rather than Expo Go: [MapLibre setup](https://maplibre.org/maplibre-react-native/docs/setup/expo/), [Geoapify integration](https://apidocs.geoapify.com/how-to/maps/react-native-maplibre-map).
+
+Review dashboards weekly/before releases and daily during the pilot. Use included alerts where available; Neon Free does not include paid-plan spending alerts. At 70% usage investigate and reduce optional/staging activity; at 85% pause pilot invitations and expensive exports/test traffic; at exhaustion return explicit unavailable/retry states. Never upgrade silently or discard accepted user data. Admission controls reject new commands before acceptance when execution resources are unavailable. Start with an invitation-only load-limited pilot, without a promised user count or uptime SLA. Monetization is outside scope and would require reviewing Hobby eligibility.
+
+App map keys are public and limited to map usage/quota; private geocoding and privileged keys stay server-side. Explain that map providers receive viewport requests when authorized users open maps. No exact addresses in shared caches. Persist only needed canonical city/centroid and host-owned venue data under provider storage/attribution terms. Allow manual venue pin/address input, but require canonical city and IANA timezone before publishing; failed city resolution blocks publication until retry without adding manual discovery destinations.
+
+Store publication is the funded exception: [Apple Developer Program](https://developer.apple.com/programs/enroll/) and [Google Play registration](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en). No extra hardware or paid build plan is assumed.
+
+## Delivery and maintenance
+
+Use the durable protocol in [Delivery and recovery](./delivery-and-recovery.md). The official [NestJS Workflow integration](https://workflow-sdk.dev/docs/getting-started/nestjs) supports Vercel and is currently beta; pin/test it and its generated consumer deployment. This is the selected implementation with a staging acceptance gate, not another provider-selection question. Failed compatibility/quota checks block release, never authorize paid fallback.
+
+Only IDs enter workflow history; encrypted transient command input and safe notifications live in Neon. Accept a durable run before business changes, make transactions idempotent, and retry dispatch without periodic notification-table scans. Clients load one entry/re-entry snapshot and apply push projections without per-push reads. Use versioned scheduled completion and a protected daily maintenance invocation at 03:00 UTC, bounded batches with durable continuations. Previews never use production credentials; staging pushes go only to test accounts.
+
+## Audience and minimum safety operations
+
+Personal-account Magic players aged 18+ worldwide. Require self-declaration and versioned policy acknowledgement, not birth dates or IDs; this is not verified age. Private homes are supported in the pilot/MVP with city-only discovery and approval-gated precise detail. No store profiles, payments, advertisements, tournament brackets, or child-directed flows.
+
+Provide in-app reporting, a published private support route, and an operator CLI to review reports, disable accounts and cancel unsafe sessions. Restricted operator credentials and actor/reason/time auditing are required; public profile ownership grants no operator access. Review reports daily during the pilot, targeting first response within 72 hours without promising 24/7 coverage. Never accept sensitive reports in public GitHub issues. Publishing policy text and an actual private support contact before invitations is a release task, not an open audience decision.
+
+## Retention schedule
+
+These are adopted product limits, not statutory durations or a worldwide compliance claim. Publish purposes/vendor behavior before production collection. [Storage-limitation guidance](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en) informs minimization. Earlier account deletion overrides normal retention except a documented narrow security/legal hold.
+
+| Category | Accepted period | Required behavior |
 | --- | --- | --- |
-| Vercel | 0 | Hobby, subject to personal/non-commercial eligibility and free compute/transfer limits |
-| Durable delivery | 0 | Only included Hobby Workflow/Queue allowances; validate the SDK and no-charge quota behavior before adoption |
-| Neon | 0 | Free plan: 100 CU-hours/project/month, 1 GB PostgreSQL storage/project, and 5 GB public transfer/project/month |
-| Push transport | 0 | Expo push service candidate; sends still consume the API/database's included resources |
-| Mapping and geocoding | 0 | A provider with a usable free tier and attribution; reject paid overages rather than assuming a paid map allowance |
-| API hostname | 0 | Use the supplied vercel.app HTTPS hostname and validate social callback configuration without assuming a purchased domain |
-| Backup and monitoring | 0 | Included provider features and existing private storage; no paid log retention or backup destination |
-| CI and native builds | 0 | Standard GitHub Actions runners for the public repositories, within included storage; no paid EAS or larger runner |
-| Total infrastructure spending | 0 | Quota exhaustion can reduce availability; no automatic paid fallback |
+| Discovery device position | Request lifetime | No movement history; redact coordinates/query strings from logs and analytics |
+| Account/linked identities | While used | Deletion immediately disables access, cancels active hosted games and withdraws active memberships; purge/anonymize personal records within 30 days |
+| Inactive/incomplete account | 24 months since last authenticated use | In-app/push notice where available, 30 days to return, then deletion; no guaranteed email notice or background keep-alive |
+| Saved venue/precise saved location | While explicitly saved by an active owner | Owner-only; delete on owner request/account deletion. Independent from session snapshots |
+| Unpublished session draft | 30 days after last host edit | Delete draft/private snapshot |
+| Session/participation history | 90 days after end/cancellation | Delete personal history; no indefinite movement analytics |
+| Exact session address/map and prior revisions | 7 days after end/cancellation | Deny access at completion/cancellation; purge all precise revisions separately from city-level history |
+| In-app notification | 90 days from creation | Paginated inbox, no precise address; earlier deletion applies |
+| Successful delivery/command result | 7 days after completion | Minimal IDs/outcomes and safe projection; erase private command input on commit/terminal rejection |
+| Failed delivery diagnostics | 30 days from terminal failure | Redacted codes/IDs, no user content or provider secrets; bounded retries |
+| Prepared/unaccepted command | 24 hours | No business effects; expire encrypted input and reject late execution |
+| Pending command input | Until execution, maximum 24 hours | Encrypted/owner-restricted; expired command cannot mutate data |
+| Push association | Until logout/deletion or 90 days without foreground use | Remove on logout, disable invalid tokens; foreground registration renews last-seen |
+| Auth sessions/refresh hashes | 30-day inactivity, 90-day absolute lifetime | Minimal expired/revoked session and consumed-token tombstones kept 30 further days for reuse detection; no raw refresh secret |
+| Auth transactions/completion codes | 10 minutes / 60 seconds | Single-use; reject by timestamp even before daily cleanup |
+| Throttle buckets | Maximum 24 hours | Salted IP/installation buckets, no raw request/token history |
+| App/security logs | Maximum 30 days | Shorter provider defaults allowed; no precise location, credentials, bodies or unnecessary profile data |
+| Closed reports/operator audit | 180 days after closure/action | Restricted access, open-case review every 30 days; justify exceptions |
+| Deletion ledger | From deletion request until 35 days after final purge | Minimal deleted UUID/request/purge times, encrypted local recovery copy; prevent resurrection from backups |
+| Backups/exports | Maximum 30 days from creation | Private/encrypted/bounded; replay deletion ledger and retention before serving a restore |
+| Test fixtures/failure artifacts | Fixtures per run; artifacts maximum 7 days | Synthetic only, within included storage; no production copies in public CI |
 
-Free-tier checks dated 26 November 2026: [Vercel Hobby](https://vercel.com/docs/plans/hobby.md), [Vercel terms](https://vercel.com/legal/terms), [Neon Free limits](https://neon.com/docs/introduction/plans), [Expo push fees](https://docs.expo.dev/push-notifications/faq/), and [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+Maintenance rechecks the current lifecycle/version and end/cancel time before purging edited sessions; obsolete timers cannot erase a rescheduled active session. Saved venues have their own purpose. Remove orphaned exact-location revisions with drafts/history. Daily batches select records whose expiry falls before the next scheduled run, purging slightly early rather than exceeding maximum periods; account deletion cannot exceed 30 days. Application authorization also checks expiry immediately, independently of physical cleanup.
 
-Vercel Hobby is for personal or non-commercial use. Keep that eligibility explicit when choosing the initial launch model. Neon Free suspends compute or restricts operations when its resource limits are exhausted; storage remains a continuous limit. Use small pools, scale-to-zero, isolated low-usage staging resources, and no notification polling or always-on database scans. Monitor quotas and provide clear unavailable/retry states; do not silently upgrade or discard accepted user data to stay under a quota. Neon supports [PostGIS](https://neon.com/docs/extensions/postgis).
+Provider-managed backups/logs may not be individually erasable. Document those limits; row deletion does not instantly erase backups. On restore keep traffic disabled, replay the current deletion ledger and time-based retention, invalidate restored auth/push credentials, and only then reopen. Never revive a deleted account or send old queued notifications.
 
-The [Hobby Workflow allowance](https://vercel.com/docs/workflows/pricing) includes 50,000 events/month and 1 GB written data; extended retained Workflow data is not available on Hobby. [Queues](https://vercel.com/docs/queues/pricing) includes an allowance of 1,000,000 operations, with message sizing/options affecting consumption. Function execution also uses its own quota. These allowances are feasibility inputs, not permission to enable paid metering. Validate durable recovery, retention, and no-charge limit behavior together before selecting the adapter.
+## Backup and recovery decision
 
-Apply alerts before quota exhaustion and configure zero paid usage wherever the provider exposes that control. Do not attach an automatic upgrade or paid marketplace integration. If a required feature cannot fit a free plan or existing resource, record the blocked capability and propose a zero-cost design adjustment; it is not authorized to incur a small charge instead.
+Use included Neon instant restore first: up to six hours bounded by change volume, a restore window rather than a six-hour RPO guarantee. Automated snapshot schedules are paid; a manual-snapshot count limit does not establish free snapshot storage. The zero-cost baseline does not depend on managed snapshots or a 30-day managed recovery service. See [Neon recovery/snapshot limits](https://neon.com/docs/introduction/plans).
 
-For geocoding, [Geoapify's free tier](https://www.geoapify.com/pricing/) is a candidate with 3,000 credits/day and required attribution. Select a detail-map option that also fits free use without a paid billing fallback. Limit requests and handle quota failure explicitly; hosting location input remains separate from a manual discovery destination.
+Supplement with a private non-synced directory on the maintainer's existing PC outside all Git repositories. Manually run a custom-format `pg_dump` weekly and immediately before production migrations, streamed into `age` public-key encryption without a plaintext dump. Keep the decryption key separately. Retain at most four weekly exports plus one pre-migration copy, expire each within 30 days and cap local storage at 5 GB. Check disk space and Neon transfer quota first; failed mandatory pre-migration export blocks release. This is a manual operational duty, not unattended backup automation.
 
-## Authentication without email delivery
+Update an encrypted copy of the minimal deletion ledger after each completed deletion and before exports. Consult the live ledger when available; if neither a current ledger nor recovery-safe deletion record is available, keep the restored service offline. Never put production dumps/deletion records in public CI artifacts, repository history, or shared drives. No off-site storage account/capacity is assumed.
 
-Google and Apple provide sign-in and their own account-recovery processes. NestJS verifies provider credentials, resolves internal identities, and owns application sessions. No local password hashing/reset, recovery codes, email sender, or email-domain purchase is in the MVP. Public display name is separate from sign-in identity.
-
-Finalize explicit identity linking/unlinking and session policy in [Authentication decisions](./authentication-decisions.md). Losing every linked provider leaves no independent app recovery channel. Validate social callbacks/native configuration within available provider hostnames and the zero-budget constraint. Email authentication can be proposed later if a domain and delivery setup are chosen; it is not a current dependency.
-
-The funded exception is store publication: [Apple Developer Program](https://developer.apple.com/programs/enroll/) lists 99 USD/year, with regional pricing, and [Google Play registration](https://support.google.com/googleplay/android-developer/answer/6112435?hl=en) lists 25 USD once. Existing memberships can cover these costs. Use CI for native builds; no paid EAS subscription or new test hardware is included.
-
-## Proposed deployment arrangement
-
-- Use separate Vercel projects for staging and production, and separately credentialed Neon resources. Place the API compute near its database; an initial European location is an infrastructure proposal, not a limit on where users can host sessions.
-- Keep application authentication custom in NestJS; selecting Neon does not select Neon's managed authentication product.
-- Use event-triggered durable notification work rather than polling the notification table. Prototype the recovery boundary between database commit and delivery with the selected Vercel Workflow or Queue SDK before finalizing it.
-- Load an initial notification snapshot and patch foreground UI state from safe push payloads. Reconcile once on app entry/foreground return or explicit refresh to recover missed events; do not refetch for every push.
-- Configure session-end work for the relevant session version and revalidate after edits. Retention cleanup is a bounded daily maintenance task, not a notification refresh loop.
-- Keep staging pushes confined to test recipients. Preview deployments use synthetic data and never inherit production credentials.
-- Size both environments within free quotas, reuse included provider hostnames, and keep the staged delivery adapter's resource use bounded. No production-to-public-CI database copies are allowed.
-
-## Proposed audience
-
-Launch for adult Magic players aged 18 and over worldwide, using personal profiles only. This simplifies the first release's in-person and private-location flows. The age restriction is proposed and has not been adopted as a confirmed product decision.
-
-Use an explicit age declaration and policy acknowledgement rather than collecting a full birth date or identity document for ordinary registration. This is not a claim of verified age. Support casual players and hosts, in English and Italian, without business accounts, store administration, payments, or professional tournament tooling. Keep reporting and a documented support response process in the MVP. Select the initial format separately; Commander remains a proposal.
-
-## Proposed retention schedule
-
-Durations below are product and operational proposals, not statutory retention periods or a claim of worldwide legal compliance. Confirm the purpose of each category and publish the accepted policy before collecting production data. The [European Commission's storage-limitation guidance](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en) calls for keeping personal data no longer than necessary for its purpose.
-
-| Category | Proposed period | Required behavior |
-| --- | --- | --- |
-| Device discovery position | Request lifetime only | No location history; redact coordinates from logs and analytics |
-| Active account and identity | While account is used | On deletion request, revoke sessions and tokens immediately, cancel future hosted games, withdraw future memberships, and purge or anonymize personal records within 30 days |
-| Inactive account | Review after 24 months without activity | Notify the owner and allow 30 days to return before starting deletion |
-| Session and participation history | 90 days after end or cancellation | Then delete or anonymize personal history; keep only non-identifying aggregate counts if needed |
-| Exact session address and map point | Until 7 days after end or cancellation | Participant access ends immediately at completion/cancellation; purge precise stored location separately from longer-lived city-level history |
-| In-app notifications | 90 days | Paginated inbox; no exact address in payloads; earlier account deletion takes precedence |
-| Successful delivery payloads | 7 days | Keep minimal event IDs and outcomes; minimize retained push content |
-| Failed delivery diagnostics | 30 days | Redacted diagnostics for support; use bounded retries and surface permanent failure |
-| Device push tokens | While installation is active | Unlink on logout, disable invalid tokens immediately, and purge after 90 days of inactivity |
-| Authentication session and refresh hashes | Proposed 30-day inactivity limit; minimal revoked/expired records for 30 further days | Preserve only what is required for rotation/reuse detection and security investigation |
-| Application/security logs | 30 days | Exclude exact locations, provider credentials, authorization codes, tokens, and unnecessary profile data |
-| Closed abuse reports | 180 days after closure | Restricted operator access; review open cases every 30 days and justify longer retention individually |
-| Backups | Proposed rolling maximum 30 days for any copies we keep | A retention ceiling, not a promise of 30-day managed recovery; use only included history/snapshots or encrypted exports to existing private storage |
-| Test fixtures and failure artifacts | Synthetic fixtures per run; diagnostics 7 days | Isolate test data and redact secrets; no production database copies in public CI |
-
-Account deletion must cover the app database, delivery providers where supported, device associations, and derived personal data. Document vendor-managed retention that cannot be shortened through the application. Do not claim that deleting a row instantly removes older backups: track deletion requests, reapply them after any restore before serving data, and let protected backup copies expire within the stated window. A narrowly documented legal/security hold is handled separately from normal product retention.
-
-Neon Free currently provides a limited 6-hour instant-restore window, bounded by change volume, and one manual snapshot; it does not implement the proposed 30-day recovery horizon. Validate a restore with included features. Any longer recovery scheme needs a proven free, private encrypted destination already available to the operator; its availability and automation remain open. Never use public repository files or public CI artifacts for production backups. Provider log/history windows may be shorter than our proposed maximums.
+Before the pilot and every three months, restore into a private isolated database, apply ledger/retention, validate schema/relationships, and record only a redacted drill result. Pilot recovery target: one working day once operator/copy are available; fallback export data may be seven days old if weekly exports succeeded. Missed duties, hardware loss, provider failure, or exhausted quota can increase loss/outage. These limitations are accepted for this zero-budget pilot; independent automated disaster recovery is outside the funded MVP, not an open product decision.
 
 ## Accepted test infrastructure
 
-| Layer | Accepted implementation direction |
-| --- | --- |
-| API unit | Jest and NestJS TestingModule, with isolated adapters |
-| API integration | Real PostgreSQL/PostGIS containers on Linux GitHub Actions runners; migrate empty and previous supported schemas |
-| API HTTP E2E | Supertest against real NestJS/database and provider-token verification, with controlled push, geocoding, and social issuer boundaries |
-| App unit/integration | Jest with jest-expo and React Native Testing Library; test initial snapshots and direct push-cache updates without hidden refetches |
-| Android E2E | Maestro on a standard Linux runner with an emulator and an identified native build |
-| iOS E2E | Maestro on a standard macOS/Xcode runner with a simulator; explicit device smoke tests for provider sign-in and push |
-| Provider compatibility | Small Neon/Vercel staging smoke checks on trusted changes or release candidates; local database containers remain the fast baseline |
+Use Jest/NestJS TestingModule, real PostGIS containers and Supertest on standard Linux GitHub Actions; jest-expo/React Native Testing Library; Maestro on Linux Android emulators and standard macOS/Xcode simulators. Controlled issuer tests keep verification real; real social-provider and APNs/FCM checks remain release tasks. Trusted staging smoke tests verify Vercel/Neon compatibility.
 
-[Standard GitHub-hosted runner compute is free for public repositories](https://docs.github.com/en/billing/concepts/product-billing/github-actions); larger runners and storage have separate billing. Keep the three repositories public for this model and reassess before changing visibility. Extra paid CI compute and storage budget is zero. Upload only bounded, sanitized failure diagnostics within the included account storage, retain them for at most seven days, and clean them up sooner if necessary to avoid charges. Cancel superseded feature-branch runs and do not enable larger runners or paid EAS plans.
+[Standard runner compute is free for public repos](https://docs.github.com/en/billing/concepts/product-billing/github-actions). Keep the three repos public; bound sanitized artifacts to included storage and at most seven days, cancel superseded runs, and expose no production credentials to forks. Coverage remains 80% statements/functions/lines, 75% branches and 90% branches for critical auth/participation/location authorization. Do not exclude business code to pass. Add real required check names only when working jobs exist. Full scenarios/triggers remain in [Testing strategy](./testing-strategy.md).
 
-Accepted coverage gates are 80% statements/functions/lines and 75% branches for owned executable logic, with 90% branch coverage for authentication, capacity/participation, and location-authorization modules once they exist. Generated clients and declarations can be excluded explicitly; business modules cannot be excluded to manufacture a pass. Every critical scenario remains mandatory regardless of percentage.
-
-Run API unit/integration/HTTP E2E on relevant API PRs. Run app unit/integration and Android E2E smoke on app PRs, with iOS smoke for authentication, native, navigation, and permission changes. Run the full Android/iOS regression on integrated dev and release candidates. Public fork PRs use synthetic data and no cloud, signing, or production credentials. Add real check names to branch rulesets only after those jobs exist and reliably report results.
-
-Zero spending, tests/coverage, and social-only auth are confirmed alongside product/provider choices. The 18+ policy, retention, linking/session rules, callback setup, durable delivery adapter, and supplemental free backups remain open. Confirm compatible SDK versions without changing test levels or introducing paid infrastructure.
+The only unresolved product choice is the [initial format catalogue](./open-decisions.md). Registrations, measurements, implementation, policy publication, and restore drills are acceptance tasks, not undecided architecture.

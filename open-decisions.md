@@ -26,23 +26,27 @@ The requested technical foundations are fixed: NestJS for the backend, React Nat
 | Test infrastructure | GitHub Actions standard Linux/macOS runners, PostGIS containers, Jest/Supertest, jest-expo/RNTL, and Maestro | Public repositories, isolated data, zero paid runner/storage budget, and both native platforms |
 | Coverage gates | 80% statements/functions/lines, 75% branches, and 90% branches for critical auth/participation/privacy modules | Required scenarios remain mandatory regardless of percentage; implement gates with the suites |
 
-## Working assumptions and open decisions
+## Decisions finalized on 26 November 2026
 
-The remaining defaults support planning only. They have not been confirmed.
-
-| Decision | Proposed default | Effect on development |
+| Decision | Accepted choice | Implementation reference |
 | --- | --- | --- |
-| Initial formats | Commander first | Keeps filters and forms small; format storage remains extensible |
-| Authentication implementation details | Linking/unlinking, session/revocation policy, provider client registrations, and compatible SDKs | Social scope and absence of local credentials are confirmed; remaining defaults are in the auth document |
-| Retention | Proposed category-specific periods, including 90-day session history and deletion within 30 days | See the operational proposal; durations require confirmation and implementation |
-| Audience | Proposed initial 18+ personal-account audience worldwide | No store accounts; the age policy is a proposal rather than a confirmed restriction |
-| Free delivery and backup feasibility | Validate included Workflow/Queue recovery and a private backup destination | Do not assume paid durable retention or 30-day managed database recovery is included |
+| Audience and homes | 18+ by self-declaration, personal accounts worldwide; private homes included | [Operating policy](./operational-proposal.md) |
+| Account linking | Explicit fresh verification of both providers; no email/name merging, no last-provider unlink, no account merge | [Authentication](./authentication-decisions.md) |
+| Auth sessions | 15-minute access, rotating refresh with 30-day inactivity/90-day absolute expiry; immediate server-side revocation checks | [Authentication](./authentication-decisions.md) |
+| Social platform implementation | Native Google on both platforms, native Apple on iOS and secure browser Apple on Android; fixed identifiers and callback contract | [Authentication](./authentication-decisions.md) |
+| Maps/geocoding | Geoapify Free and MapLibre React Native, attribution and quota limits | [Operating policy](./operational-proposal.md) |
+| Durable notifications | Vercel Workflow/Nest integration and Expo push, durable command before mutation, bounded retries and no polling | [Delivery and recovery](./delivery-and-recovery.md) |
+| Deployment | Separate staging/production in Frankfurt using provider HTTPS hostnames; personal/non-commercial free tiers | [Operating policy](./operational-proposal.md) |
+| Retention | 90-day session/inbox history, exact session snapshots 7 days, account purge within 30 days, inactive accounts after 24 months plus notice | [Full category schedule](./operational-proposal.md#retention-schedule) |
+| Backup feasibility | Included limited Neon instant restore plus weekly/pre-migration encrypted local manual exports; maximum 30-day copy retention, no paid automated backup promise | [Backup decision](./operational-proposal.md#backup-and-recovery-decision) |
+| Remaining implementation defaults | Confirmed stack, authenticated browsing, foreground-only location, capacity 2-16, terminal history, private operator CLI and pilot guardrails | [Audit](./decision-audit.md) |
 
-## Questions still open
+## Only open decision: initial formats
 
-1. Should the first version focus on Commander or launch with multiple formats?
-2. Which linking/unlinking and session/revocation defaults in [Authentication decisions](./authentication-decisions.md) should be adopted, and which app identifiers/provider client registrations will be used?
-3. Should the proposed retention schedule and 18+ audience in the [operational document](./operational-proposal.md) be adopted?
-4. Is there an existing private destination for any supplemental encrypted backups?
+| Decision | Options | Consequence |
+| --- | --- | --- |
+| Initial formats | Commander only, or an explicit set of multiple formats | Decide the initial seeded catalogue, host form choices and discovery filters before completing session publishing |
 
-Zero infrastructure budget, test infrastructure, and coverage gates are confirmed. Retention, audience age policy, and the remaining service dependencies stay open. Keep scope, architecture, API, and roadmap aligned as answers arrive.
+Commander is a candidate and example, not an accepted launch restriction. Store formats in an extensible catalogue with stable codes, without arbitrary user-created format strings in the MVP. No other MVP product or architecture decision remains open.
+
+Provider registrations, credentials, exact supported dependency versions, quota measurements, app-store metadata, implementation and staging/restore evidence are concrete setup/release tasks in the [roadmap](./development-roadmap.md). They must be completed and verified; they are not unanswered product questions. See the full [documentation audit](./decision-audit.md).
