@@ -67,6 +67,12 @@ Organize code by authentication, discovery, sessions, hosting, participation, an
 
 The API is authoritative for capacity and membership. Mobile adapters implement the [notification/cache contract](./delivery-and-recovery.md#notification-contract); an optimistic UI never confirms a seat before server approval. Precise locations stay in memory only, with cleanup on access loss or logout.
 
+## Recipient synchronization and demo isolation
+
+Use a separate transactional UserSyncCursor for recipient ordering, independent of session aggregate version. The [snapshot/event protocol](./delivery-and-recovery.md#snapshot-and-event-merge) owns listener buffering, tombstones, account-generation guards, pagination watermarks and explicit recovery. Security transactions remain immediate when the queue is unavailable; ordinary accepted commands follow the documented outcome/deadline/idempotency state machine.
+
+The release app exposes a signed-out local demo through the same feature interfaces and a separate in-memory adapter/query namespace. Demo role/position/push simulation never authenticates a real user, reaches production resources or changes the current-location rule for real discovery. The [review specification](./quality-and-release.md#store-review-access) owns packaging, coverage and store-acceptance gates.
+
 ## Geographic search
 
 Hosting accepts valid locations worldwide. Discovery uses the current foreground device position wherever the player is, without a manually selected destination or a launch-country allowlist. On permission denial or location failure, expose settings and retry actions while keeping personal session lists available.

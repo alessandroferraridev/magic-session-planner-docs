@@ -52,7 +52,7 @@ Depends on step 1 and provisioning the accepted provider registrations/platform 
 - Add issuer/subject identity uniqueness, application user/profile, authentication session, and refresh token migrations. Use shared throttling, token verification, rotation/reuse detection, and device/global logout.
 - Handle invalid/replayed provider credentials, identity collisions, throttling, cancelled sign-in, and failed callbacks. Implement explicit linking/unlinking, last-provider protection, fresh verification, 18+ onboarding and immediate session revocation; do not add local passwords or reset codes.
 - Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
-- Implement profile read and update, account state checks, and authentication guards.
+- Implement profile read/update, account state checks, terms/community-rule acceptance, versioned public-name filtering and auth guards. Deleting accounts remain disabled; real auth never accepts demo roles.
 - Add auth tests for provider signature/issuer/audience/nonce validation, replay, identity uniqueness, safe display-name collisions, throttling, linking ownership, refresh reuse, revocation, and cross-account access.
 
 **Complete when:** Google and Apple work on the agreed platforms through verified SDK/callback flows, first sign-in creates a profile, returning sign-in resolves the same user, and identity linking/session revocation follow the accepted rules. Logs contain no provider credentials, codes, tokens, or sensitive profile data.
@@ -67,7 +67,7 @@ Depends on step 2.
 - Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
 - Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
-- Enforce valid time, capacity, and ownership while allowing host edits with confirmed players present. Add version checks and session-specific location snapshots or venue revisions to prevent silent edits to unrelated games.
+- Enforce time/capacity/ownership, all documented numeric/text/admission limits and public-content filtering while preserving host edits with confirmed players. Add version checks and private snapshots; mirror full playLanguage/playStyleNotes/accessibilityNotes DTOs and saved-venue deletion semantics.
 - Implement host participation toggles under the session lock, including the freed-seat result and conflict when opting into a full table.
 - Cover creation rules with unit tests, transactional persistence and API contracts with integration and HTTP E2E tests, and both host participation choices in app integration and native E2E flows.
 
@@ -92,35 +92,35 @@ Depends on step 3 and the configured Geoapify Free adapter.
 
 Depends on step 4 and the durable-command prototype from step 1.
 
-- Implement membership transitions and locking transactions for approvals and capacity changes.
+- Implement membership transitions and actor/command/session/membership/cursor lock order. Deliver immediate deletion/suspension/cancellation/withdrawal/block effects, including stopped-worker and concurrent-action cases; permit leaving until end while joining remains future-only.
 - Build request, withdraw, approve, reject, and personal-session screens.
 - Apply committed mutation responses directly; show pending for accepted asynchronous commands and useful conflict states for the last seat. Use only explicit/entry recovery reads, no polling or per-push refetch.
 - Restrict exact location access to eligible confirmed players and the host.
 - Render the precise location map only in authorized detail after approval and clear cached location on revocation or cancellation.
 - Add completion-generation jobs and terminal cancellation/completion history; unrelated membership versions must not suppress completion.
-- Add in-app notifications, push token registration and permission handling, event-triggered delivery, and safe versioned payloads. Fetch an initial snapshot, patch UI directly from received pushes, and reconcile on app entry or explicit refresh without polling or per-push refetches.
+- Add UserSyncCursor and GET /me/snapshot, per-key projections/tombstones, listener buffering and auth/request generation guards. Implement terminal command events, two-minute execution deadlines, seven-day logical idempotency replay and explicit Outcome unknown recovery. Register push devices; entry/re-entry or explicit reads recover missed events without polling/per-push fetches.
 - Cover durable delivery retries/crash recovery, duplicate/out-of-order payloads, push denial, authorized navigation from notification taps, and absence of background refresh requests.
 - Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
 
-**Complete when:** two accounts complete discovery through approval; concurrent approval of the last seat admits one player; leaving frees a seat; cancellation or withdrawal revokes private location access.
+**Complete when:** two accounts complete approval with safe capacity; the [edge-case scenarios](./testing-strategy.md#edge-case-regression-scenarios) for command outcomes, snapshot ordering, immediate safety effects, blocking, post-start leaving, limits and expired idempotency keys pass without hidden polling.
 
 ## Step 6 Prepare the pilot
 
 Depends on steps 1 through 5.
 
 - Run the scenario matrix in [Testing strategy](./testing-strategy.md#required-scenario-coverage) and collect the evidence required by [Quality and release](./quality-and-release.md), including Android/iOS journeys, real-provider sign-in, push and location denial.
-- Add the restricted operator CLI, reporting response/audit, daily bounded retention jobs, account deletion/ledger, and bilingual privacy/community/support/deletion information on GitHub Pages.
+- Add operator moderation/removal/suspension, urgent/ordinary report triage, private appeals and bilingual terms/privacy/support/deletion pages. Daily bounded cleanup resumes physical DeletionRequests; cancellations/access denial already committed. Build the public signed-out local demo, complete both fictional roles and prove zero external traffic/production credential access.
 - Deploy Frankfurt staging on Vercel with Neon/PostGIS; validate both social flows on both platforms, geocoding/maps, migrations, free quotas, Workflow consumer/crash recovery, redaction and real push. Implement encrypted weekly/pre-migration local exports and complete a private restore/ledger drill.
 - Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 
-**Complete when:** critical defects are resolved, backups can be restored, a rollback is rehearsed, and pilot users can organize sessions without developer intervention.
+**Complete when:** critical defects are resolved, backup/ledger restore and rollback are rehearsed, moderation and the isolated demo are usable, and pilot users organize sessions without developer intervention. Store-access acceptance remains a release gate with recorded evidence.
 
 ## Step 7 Release and iterate
 
 Depends on pilot results and launch readiness checks.
 
-- Configure production environments, store listings, location permission descriptions, privacy declarations, and support contacts.
+- Configure production/store metadata, permission/privacy declarations, support contacts and exact demo App access/review instructions. Obtain acceptance of the demo access arrangement where required; actual store acceptance and real-provider smoke evidence gate publication.
 - Stabilize a release branch, validate its artifacts, merge through pull requests into `main`, tag the release, and return release fixes to `dev`. Use the documented hotfix flow for urgent production fixes.
 - Require the applicable unit, integration, API HTTP E2E, and Android/iOS E2E gates to pass for the candidate revisions before release promotion.
 - Run migration and API compatibility checks before deploying the production API and distributing the mobile app.

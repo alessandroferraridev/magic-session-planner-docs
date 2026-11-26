@@ -10,14 +10,14 @@ Each document owns the rules for its topic. Other documents link to those rules 
 
 | Topic | Document | Owns |
 | --- | --- | --- |
-| Product | [Product scope](./product-scope.md) | Audience, hosting and joining rules, privacy visible to players, screens, languages and MVP acceptance |
+| Product | [Product scope](./product-scope.md) | Audience, hosting/joining, post-start leaving, blocking, deletion, demo experience and MVP acceptance |
 | Authentication | [Authentication](./authentication.md) | Google/Apple flows, onboarding, identity linking, tokens, callbacks and revocation |
 | Architecture | [Architecture](./architecture.md) | Stack, modules, repository boundaries, geographic search and localization design |
-| Data and contracts | [Data and API](./data-and-api.md) | Entities, constraints, permissions, endpoints and transactional seat allocation |
-| Notifications and jobs | [Delivery and recovery](./delivery-and-recovery.md) | Durable commands, push payloads, UI updates, retries, lifecycle jobs and maintenance execution |
+| Data and contracts | [Data and API](./data-and-api.md) | Entities, endpoints, immediate safety transactions, numeric admission limits and seat allocation |
+| Notifications and jobs | [Delivery and recovery](./delivery-and-recovery.md) | Command outcomes/idempotency, snapshot/event ordering, push, lifecycle jobs and recovery without polling |
 | Operations | [Operations](./operations.md) | Free infrastructure, environments, quotas, support operations, retention and backup/restore duties |
 | Tests | [Testing strategy](./testing-strategy.md) | Unit/integration/E2E suites, test tools/runners, coverage, fixtures and CI gates |
-| Release readiness | [Quality and release](./quality-and-release.md) | Performance targets, privacy checks, release evidence and rollback readiness |
+| Release readiness | [Quality and release](./quality-and-release.md) | Performance/privacy checks, isolated store-review demo, release evidence and rollback readiness |
 | Development | [Development roadmap](./development-roadmap.md) | Ordered implementation steps, dependencies and completion checks |
 | Git | [Git workflow](./git-workflow.md) | Branch roles, pull requests, GitHub protections, staging and release promotion |
 | Open question | [Open decisions](./open-decisions.md) | Initial formats only |

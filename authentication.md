@@ -6,7 +6,7 @@ Status: accepted on 26 November 2026. Google and Apple are the only MVP sign-in 
 
 - Identify users by an internal UUID and a unique verified provider issuer/subject pair. Allow one Google and one Apple identity per user. Never merge by matching email or public name; reject linking an identity already attached to another user with `409 IDENTITY_ALREADY_LINKED`. Account merging and ownership transfers are outside the MVP.
 - Let users choose an editable Unicode display name, 2 to 40 characters after trimming, without uniqueness requirements. Reject control characters. It is public profile data, never a login identifier. Do not persist provider email or avatar metadata in the MVP.
-- First sign-in creates an account transactionally under the identity uniqueness constraint. Require a display name, an explicit 18+ declaration, and acknowledgement of versioned privacy/community policies before enabling discovery or hosting. Store declaration/acknowledgement timestamps and policy version, not date of birth or identity documents. An incomplete account can only finish onboarding, manage its sign-in methods, or delete itself.
+- First sign-in creates an account transactionally under the identity uniqueness constraint. Require a display name, an explicit 18+ declaration, and acknowledgement of versioned privacy information and acceptance of terms/community rules before enabling discovery or hosting. Store declaration/acknowledgement timestamps and policy version, not date of birth or identity documents. An incomplete account can only finish onboarding, manage its sign-in methods, or delete itself.
 - Explicitly link a second provider from account settings. Require fresh verification of an already linked provider and of the new identity, both within five minutes and bound to the same single-use linking transaction. Lock the user row and enforce identity uniqueness transactionally.
 - Unlink only after fresh verification with the provider that will remain. Never unlink the last identity. Unlinking also revokes the provider grant where supported and removes its stored credential through a retryable protected operation. Unlinking revokes all application sessions, including the current one; sign in again with the remaining provider. Explain this before confirmation. Linking alone does not revoke other devices.
 
@@ -45,10 +45,14 @@ Follow [OWASP OAuth guidance](https://cheatsheetseries.owasp.org/cheatsheets/OAu
 | Immediate enforcement | Every protected API request validates JWT plus current non-revoked session/account in PostgreSQL. Logout/deletion stop existing access tokens immediately; this is request authorization, not notification polling |
 | Sensitive actions | Provider verification within five minutes for linking, unlinking, and account deletion; logout needs no new provider consent |
 | Provider revocation | Verified Apple server notifications, provider invalid-grant responses, and revoked/disabled identities revoke all application sessions when observed. External Google changes are not guaranteed instantly detectable without a provider signal; the absolute session limit still applies |
-| Account deletion | Disable account/sessions immediately, revoke provider grants where supported, cancel active hosted sessions, withdraw active memberships, and apply retention |
+| Account deletion | Fresh proof, then atomically revoke sessions, cancel active hosting and withdraw active participation before acknowledgement; grant revocation and physical purge follow asynchronously |
 | Signing keys | Rotate every 90 days and on suspected compromise. Keep normal previous verification keys 24 hours; emergency removal immediately invalidates affected tokens. Keys stay deployment secrets |
 
 Retain an encrypted provider refresh/revocation credential only where required for provider token revocation, notably Apple account deletion. Keep the encryption key outside PostgreSQL; request no unrelated provider API scopes. Provider credentials are separate from application refresh tokens. Test Apple's revoke flow before launch, including deletion when the app session originated from Google.
+
+## Deletion and demonstration boundaries
+
+Follow the [immediate security transaction](./data-and-api.md#immediate-security-transactions) for deletion and account suspension. A deleting profile remains disabled until purge and cannot be restored through social login; after purge a later sign-in creates a new UUID with no old access. No demo role or fixture is an authentication credential: the public signed-out demo uses a separate local adapter and never issues an API access token. Provider verification remains mandatory for every real account.
 
 ## Recovery and completion criteria
 
