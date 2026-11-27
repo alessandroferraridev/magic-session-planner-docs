@@ -21,7 +21,6 @@ Each document owns the rules for its topic. Other documents link to those rules 
 | Release readiness | [Quality and release](./quality-and-release.md) | Performance/privacy checks, isolated store-review demo, release evidence and rollback readiness |
 | Development | [Development roadmap](./development-roadmap.md) | Ordered implementation steps, dependencies and completion checks |
 | Git | [Git workflow](./git-workflow.md) | Branch roles, pull requests, GitHub protections, staging and release promotion |
-| Product questions | [Open decisions](./open-decisions.md) | No unresolved product decisions; future questions belong here |
 
 Start with product scope, then architecture and the roadmap. Consult the dedicated specification when implementing a feature and update that document when its requirements change.
 

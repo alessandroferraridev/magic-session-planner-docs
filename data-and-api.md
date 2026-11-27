@@ -2,6 +2,21 @@
 
 Represent a scheduled table as a session and keep participation separate so requests, confirmed seats, and cancellations have explicit rules. The API must enforce the same rules for every client.
 
+## OpenAPI and Swagger UI
+
+Use `@nestjs/swagger` to generate the OpenAPI specification from the NestJS controllers and DTOs and serve interactive Swagger UI. Configure the following routes outside the business API's `/v1` prefix:
+
+- `/docs`: Swagger UI for browsing and trying API operations.
+- `/docs-json`: the generated OpenAPI JSON document.
+
+Enable these routes in local development and staging. Do not register the Swagger UI or raw JSON/YAML routes in production. Use an explicit deployment-environment setting, since a staging build can also run with `NODE_ENV=production`. CI must still export the versioned specification for every release independently of HTTP exposure.
+
+Document the application JWT bearer security scheme and mark protected operations; Swagger's Authorize input accepts an application access token obtained through the normal Google/Apple flow. Trying an operation uses the same authorization, validation and rate limits as the app. Do not persist tokens across browser sessions or include real tokens, precise user locations or personal data in examples. Swagger documentation routes are not protected automatically by NestJS controller guards.
+
+Describe request/response DTOs, required/optional fields, format discriminators and examples, pagination, stable error codes, conflict responses, and asynchronous `202`/command-status/idempotency contracts. Use stable, unique operation IDs for generated mobile client types. The CI export and served document must use the same configuration; validate the exported schema and compare documented operations with the business HTTP routes before publishing the artifact.
+
+Implement this during the initial backend scaffold; this specification does not mean the API or Swagger endpoints already exist. See the [NestJS OpenAPI documentation](https://docs.nestjs.com/openapi/introduction) for generation and route configuration.
+
 ## Main entities
 
 | Entity | Principal fields | Constraints |
