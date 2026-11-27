@@ -4,15 +4,15 @@ Deliver one usable flow at a time: create a session, find it nearby, then confir
 
 Unit, integration, and E2E tests are required for both API and app. Implement the relevant scenarios with each feature using the [testing strategy](./testing-strategy.md); testing is part of each step's completion criteria.
 
-## Step 0 Close the initial formats and apply accepted decisions
+## Step 0 Apply the complete format specification
 
-- Use personal profiles for all hosts, host approval, editable session fields, and host participation that defaults to playing and can be changed later. Confirm the initial formats.
+- Use personal profiles for all hosts, host approval, editable session fields, and host participation that defaults to playing and can be changed later. Apply the complete [format catalogue/configuration](./formats.md), including official, community, historical, device-play and custom organizing paths.
 - Use the confirmed iOS and Android platforms through Expo, worldwide hosting and discovery, and English/Italian interface support. Include private homes and require 18+ self-declaration; the invited pilot must not establish a regional product restriction.
 - Use Google/Apple-only sign-in with NestJS-issued application sessions and a separate public profile name. Apply accepted linking/session/SDK/identifier/callback rules. Provision provider registrations, Frankfurt Vercel/Neon resources, Geoapify Free and MapLibre development builds.
 - Apply the confirmed [Git workflow](./git-workflow.md), with main for releases, dev for staging, and pull requests for integration. Branch rulesets and dev defaults are configured in all three repositories; plan their CI setup.
 - Apply city-only discovery, approval-gated detail/map, current-device origin, and no-polling push updates. Use zero spending and accepted tests; implement accepted retention, audience, durable delivery, and manual encrypted backup duties in the [operations](./operations.md). No email sender or local credentials are required.
 
-**Complete when:** [Open decisions](./open-decisions.md) contains only initial formats. All other policies are accepted; independent scaffolding can proceed now. Format-specific publishing/filter fixtures wait for the initial catalogue.
+**Complete when:** no product decisions remain open, the [formats specification](./formats.md) defines every organizing family and Custom, and each reviewed preset has source/version metadata. Source verification, implementation and real release evidence remain tracked work; scaffolding can proceed now.
 
 ## Step 1 Establish the two projects
 
@@ -25,8 +25,8 @@ Repository setup:
 
 Backend tasks:
 
-- Scaffold NestJS with strict TypeScript, linting, formatting, unit test support, and a supported Node.js version.
-- Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
+- Scaffold NestJS with strict TypeScript, linting, formatting, unit tests and supported Node.js. Add versioned catalogue/profile/schema seed data and generated client metadata; all-format support is a first-release requirement, not a later expansion.
+- Add environment validation, minimal health routes, global request validation and structured logs. Configure @nestjs/swagger, Swagger UI, OpenAPI JSON, bearer authorization and the CI schema export under the [API documentation contract](./data-and-api.md#openapi-and-swagger-ui); verify local/staging availability and production route exclusion.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
 - Validate Vercel Hobby, Neon Free/PostGIS, small pools, migrations, isolated environments, and provider callback configuration. Prototype the selected Workflow/Nest Vercel consumer, durable command acceptance and crash recovery within free quotas, including 202/pending UI behavior without polling. Failed technical acceptance blocks launch, not a new product vote.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
@@ -52,7 +52,7 @@ Depends on step 1 and provisioning the accepted provider registrations/platform 
 - Add issuer/subject identity uniqueness, application user/profile, authentication session, and refresh token migrations. Use shared throttling, token verification, rotation/reuse detection, and device/global logout.
 - Handle invalid/replayed provider credentials, identity collisions, throttling, cancelled sign-in, and failed callbacks. Implement explicit linking/unlinking, last-provider protection, fresh verification, 18+ onboarding and immediate session revocation; do not add local passwords or reset codes.
 - Verify Google and Apple responses during sign-in, map them to local identities, and issue our application session. Validate our own access token signature, issuer, audience, and expiry for API requests.
-- Implement profile read and update, account state checks, and authentication guards.
+- Implement profile read/update, account state checks, terms/community-rule acceptance, versioned public-name filtering and auth guards. Deleting accounts remain disabled; real auth never accepts demo roles.
 - Add auth tests for provider signature/issuer/audience/nonce validation, replay, identity uniqueness, safe display-name collisions, throttling, linking ownership, refresh reuse, revocation, and cross-account access.
 
 **Complete when:** Google and Apple work on the agreed platforms through verified SDK/callback flows, first sign-in creates a profile, returning sign-in resolves the same user, and identity linking/session revocation follow the accepted rules. Logs contain no provider credentials, codes, tokens, or sensitive profile data.
@@ -61,13 +61,13 @@ Depends on step 1 and provisioning the accepted provider registrations/platform 
 
 Depends on step 2.
 
-- Implement venue, protected venue location, session, and participation migrations and constraints.
+- Implement venue/location/session/participation plus FormatDefinitionRevision/RulesProfile, SessionFormat, group/assignment and suggestion migrations. Seed the official-hub coverage and named community/historical/custom paths; distinguish host-declared templates from verified summaries.
 - Add venue forms with public-space/private-home categories and a city-only preview; both categories protect exact location equally.
 - Support worldwide venue locations and international address formats, with timezone selection tied to the venue rather than the interface language or device timezone.
 - Implement draft creation with hostParticipates defaulting to true, optional approved host membership, publishing, allowed edits, and cancellation.
-- Show the host's playing choice in the creation form and seat preview; retain host management permissions when the host only provides the table.
+- Build the progressive format picker/setup with en/it explanations, media, materials, rules/proxy/intent and layout/team/role controls. Show the playing-host seat and compatible default assignment; non-playing hosts retain management only. Validate total capacity separately from per-game structure and allow explicit solo/custom layouts.
 - Build session detail and hosted session screens. Add realistic fixtures for public and private venues.
-- Enforce valid time, capacity, and ownership while allowing host edits with confirmed players present. Add version checks and session-specific location snapshots or venue revisions to prevent silent edits to unrelated games.
+- Enforce time/capacity/ownership, all documented numeric/text/admission limits and public-content filtering while preserving host edits with confirmed players. Add version checks and private snapshots; mirror full playLanguage/playStyleNotes/accessibilityNotes DTOs and saved-venue deletion semantics.
 - Implement host participation toggles under the session lock, including the freed-seat result and conflict when opting into a full table.
 - Cover creation rules with unit tests, transactional persistence and API contracts with integration and HTTP E2E tests, and both host participation choices in app integration and native E2E flows.
 
@@ -77,7 +77,7 @@ Depends on step 2.
 
 Depends on step 3 and the configured Geoapify Free adapter.
 
-- Add geographic indexes and parameterized radius, date, format, and available-seat queries.
+- Add geographic and format-code/base/family/modifier indexes and parameterized radius/date/seat/medium/intent queries. Resolve aliases without merging different rules authorities; public cards stay city-only with a compact format label.
 - Implement one-time current foreground location lookup, permission explanation, settings recovery, and retry. Do not implement a manual discovery destination.
 - Resolve canonical cities worldwide and support host venue positioning separately. Discovery and unapproved detail expose only the city; precise coordinates are not used for pre-approval filtering or ranking.
 - Build the nearby list, filters, pagination, explicit refresh and no-results state, without distance labels or secret-coordinate ranking.
@@ -92,40 +92,40 @@ Depends on step 3 and the configured Geoapify Free adapter.
 
 Depends on step 4 and the durable-command prototype from step 1.
 
-- Implement membership transitions and locking transactions for approvals and capacity changes.
-- Build request, withdraw, approve, reject, and personal-session screens.
+- Implement membership transitions and actor/command/session/membership/cursor lock order. Deliver immediate deletion/suspension/cancellation/withdrawal/block effects, including stopped-worker and concurrent-action cases; permit leaving until end while joining remains future-only.
+- Build one-seat request/withdraw/approve/reject and personal-session screens, optional team/role preferences and host-only assignment. Structural readiness never reserves a seat, bypasses approval or prevents safety withdrawal.
 - Apply committed mutation responses directly; show pending for accepted asynchronous commands and useful conflict states for the last seat. Use only explicit/entry recovery reads, no polling or per-push refetch.
 - Restrict exact location access to eligible confirmed players and the host.
 - Render the precise location map only in authorized detail after approval and clear cached location on revocation or cancellation.
 - Add completion-generation jobs and terminal cancellation/completion history; unrelated membership versions must not suppress completion.
-- Add in-app notifications, push token registration and permission handling, event-triggered delivery, and safe versioned payloads. Fetch an initial snapshot, patch UI directly from received pushes, and reconcile on app entry or explicit refresh without polling or per-push refetches.
+- Add UserSyncCursor and GET /me/snapshot, per-key projections/tombstones, listener buffering and auth/request generation guards. Implement terminal command events, two-minute execution deadlines, seven-day logical idempotency replay and explicit Outcome unknown recovery. Register push devices; entry/re-entry or explicit reads recover missed events without polling/per-push fetches.
 - Cover durable delivery retries/crash recovery, duplicate/out-of-order payloads, push denial, authorized navigation from notification taps, and absence of background refresh requests.
 - Add unit transition cases, integration and HTTP E2E tests for final-seat races over independent connections, and native two-account request and approval flows with cancellation and conflict recovery.
 
-**Complete when:** two accounts complete discovery through approval; concurrent approval of the last seat admits one player; leaving frees a seat; cancellation or withdrawal revokes private location access.
+**Complete when:** two accounts complete approval with safe capacity; the [edge-case scenarios](./testing-strategy.md#edge-case-regression-scenarios) for command outcomes, snapshot ordering, immediate safety effects, blocking, post-start leaving, limits and expired idempotency keys pass without hidden polling.
 
 ## Step 6 Prepare the pilot
 
 Depends on steps 1 through 5.
 
 - Run the scenario matrix in [Testing strategy](./testing-strategy.md#required-scenario-coverage) and collect the evidence required by [Quality and release](./quality-and-release.md), including Android/iOS journeys, real-provider sign-in, push and location denial.
-- Add the restricted operator CLI, reporting response/audit, daily bounded retention jobs, account deletion/ledger, and bilingual privacy/community/support/deletion information on GitHub Pages.
+- Add operator moderation/removal/suspension, urgent/ordinary report triage, private appeals and bilingual terms/privacy/support/deletion pages. Daily bounded cleanup resumes physical DeletionRequests; cancellations/access denial already committed. Build the public signed-out local demo, complete both fictional roles and prove zero external traffic/production credential access.
 - Deploy Frankfurt staging on Vercel with Neon/PostGIS; validate both social flows on both platforms, geocoding/maps, migrations, free quotas, Workflow consumer/crash recovery, redaction and real push. Implement encrypted weekly/pre-migration local exports and complete a private restore/ledger drill.
 - Build distributable iOS and Android test versions and run an invited pilot with personal-account players and hosts, covering English/Italian and representative locations/timezones without restricting global hosting.
 - Record discovery failures, approval problems, accessibility issues, and query performance without collecting movement histories.
 
-**Complete when:** critical defects are resolved, backups can be restored, a rollback is rehearsed, and pilot users can organize sessions without developer intervention.
+**Complete when:** critical defects are resolved, backup/ledger restore and rollback are rehearsed, moderation and the isolated demo are usable, and pilot users organize sessions without developer intervention. Store-access acceptance remains a release gate with recorded evidence.
 
 ## Step 7 Release and iterate
 
 Depends on pilot results and launch readiness checks.
 
-- Configure production environments, store listings, location permission descriptions, privacy declarations, and support contacts.
+- Configure production/store metadata, permission/privacy declarations, support contacts and exact demo App access/review instructions. Obtain acceptance of the demo access arrangement where required; actual store acceptance and real-provider smoke evidence gate publication.
 - Stabilize a release branch, validate its artifacts, merge through pull requests into `main`, tag the release, and return release fixes to `dev`. Use the documented hotfix flow for urgent production fixes.
 - Require the applicable unit, integration, API HTTP E2E, and Android/iOS E2E gates to pass for the candidate revisions before release promotion.
 - Run migration and API compatibility checks before deploying the production API and distributing the mobile app.
 - Monitor errors, failed join attempts, empty searches, and latency. Investigate reports through the operator process.
-- Prioritize improvements using pilot feedback: more formats, recurring sessions, waitlists, chat, and moderation tools. Precise approved-detail maps and push delivery are already MVP requirements.
+- Prioritize optional recurring sessions, waitlists, chat and richer moderation using pilot feedback. Maintain/extend catalogue data and custom templates continuously; every format family, maps and push already belong to the first release.
 
 **Complete when:** a player can install the app, use English or Italian, discover or host a real session at a chosen location worldwide, and complete the seat request and approval flow, with support and rollback procedures available.
 
@@ -142,4 +142,4 @@ flowchart LR
     Pilot --> Release[7 Release]
 ```
 
-The app can use agreed OpenAPI examples while API features are implemented. Connect each feature to staging before calling it complete. If scope must shrink, postpone optional capabilities and additional formats while retaining current-location discovery, approval-gated precise maps, in-app/push updates, privacy, and safe seat allocation.
+The app can use agreed OpenAPI examples while API features are implemented. Connect each feature to staging before calling it complete. If scope must shrink, postpone optional gameplay/deck/tournament automation while retaining complete format representation and current-location discovery, approval-gated precise maps, in-app/push updates, privacy, and safe seat allocation.

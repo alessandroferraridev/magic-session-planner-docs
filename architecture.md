@@ -11,7 +11,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Server state | TanStack Query | Fetching, invalidation, pagination, and mutation feedback |
 | Forms | React Hook Form and Zod | Client input validation and useful field errors |
 | API | NestJS with TypeScript and REST | Feature modules, validation, guards, and service boundaries |
-| API contract | NestJS OpenAPI generation | Documented endpoints and generated mobile client types |
+| API contract | @nestjs/swagger OpenAPI generation and Swagger UI | Interactive API documentation and generated mobile client types |
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
 | Authentication | Google and Apple only, with NestJS-owned application sessions | Explicit linking, immediate revocation, and native/browser flows as specified in the authentication document |
@@ -46,7 +46,8 @@ NestJS verifies Google/Apple credentials and owns internal users, authorization 
 - `Auth`: Google/Apple verification, internal identity resolution/linking, application tokens, refresh rotation, and session revocation.
 - `Users`: display profiles, preferences, and deletion requests.
 - `Venues`: owner-managed saved venues, canonical city references and separately protected exact locations for every venue type.
-- `Sessions`: drafts, editable business fields and host participation, versioned updates, publishing, cancellation, and lifecycle jobs.
+- `Formats`: versioned definitions/profiles, normalized alias search, compatible declarative settings, suggestions and public non-personal catalogue snapshots.
+- `Sessions`: drafts, format snapshots, group/team/role plans, editable host participation, versioned updates, publishing, cancellation and lifecycle jobs.
 - `Participation`: requests requiring host approval, optional approved host membership, withdrawal, and capacity transactions.
 - `Discovery`: canonical city-level filtering/ranking and pagination, with no distance labels in public responses.
 - `Moderation`: basic reports and operator actions before public launch.
@@ -66,6 +67,20 @@ The selected Vercel Workflow/Nest adapter executes durable commands and schedule
 Organize code by authentication, discovery, sessions, hosting, participation, and profile. Keep navigation routes small and place API access, secure token storage, and location services behind shared adapters.
 
 The API is authoritative for capacity and membership. Mobile adapters implement the [notification/cache contract](./delivery-and-recovery.md#notification-contract); an optimistic UI never confirms a seat before server approval. Precise locations stay in memory only, with cleanup on access loss or logout.
+
+## Recipient synchronization and demo isolation
+
+Use a separate transactional UserSyncCursor for recipient ordering, independent of session aggregate version. The [snapshot/event protocol](./delivery-and-recovery.md#snapshot-and-event-merge) owns listener buffering, tombstones, account-generation guards, pagination watermarks and explicit recovery. Security transactions remain immediate when the queue is unavailable; ordinary accepted commands follow the documented outcome/deadline/idempotency state machine.
+
+The release app exposes a signed-out local demo through the same feature interfaces and a separate in-memory adapter/query namespace. Demo role/position/push simulation never authenticates a real user, reaches production resources or changes the current-location rule for real discovery. The [review specification](./quality-and-release.md#store-review-access) owns packaging, coverage and store-acceptance gates.
+
+## Format catalogue boundary
+
+[Formats and session configuration](./formats.md) owns full organizing coverage. The API owns immutable definitions/profiles, declarative capability schemas and validated session snapshots. Store normalized code/revision/media/family selectors in indexed relational fields and bounded conditional configuration in JSONB; use parameterized joins for primary/base/modifier facets. No live deck/card-price database or paid format provider is introduced.
+
+Generate app-safe metadata from version-controlled catalogue revisions. The React Hook Form/Zod controls render a finite set of known field/capability types; server-owned validators remain authoritative and reject unknown field/schema capabilities. Cache non-personal definitions by revision/locale with ETag support. Explicit picker/detail actions can refresh them; notification receipt never triggers a catalogue fetch. Unknown newer schemas render safe read-only summaries and an explicit update action rather than dropping fields.
+
+Team/role assignments are session business state, not organization profiles or group bookings. Use the session lock and aggregate revisions for configuration/approval/assignment changes; membership, capacity and safety always dominate informational readiness. A named digital format only changes equipment/client requirements for a physical gathering. No remote destination, digital account integration, game server or tournament engine is implied.
 
 ## Geographic search
 
@@ -94,7 +109,7 @@ Return stable machine-readable API error codes for the app to localize. Verify t
 
 ## Repository responsibilities
 
-The API repository owns the schema, migrations, API, OpenAPI export, database fixtures, and API CI. The app repository owns the mobile experience, generated API client, device configuration, and mobile CI.
+The API repository owns the schema, migrations, API, Swagger UI, OpenAPI export, database fixtures, and API CI. The [API documentation contract](./data-and-api.md#openapi-and-swagger-ui) defines routes, environment exposure and schema requirements. The app repository owns the mobile experience, generated API client, device configuration, and mobile CI.
 
 Publish a versioned OpenAPI artifact from backend CI, then update the app client in a reviewed app change. Keep additive changes compatible with older installed app versions. Use `/v1` for the initial API and maintain a staging API that development builds can reach from physical devices.
 

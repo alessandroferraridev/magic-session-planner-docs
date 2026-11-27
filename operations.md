@@ -40,7 +40,15 @@ Store publication is the funded exception: [Apple Developer Program](https://dev
 
 Audience, age declaration, permitted host profiles and private-home support are defined in [Product scope](./product-scope.md#audience-and-hosting).
 
-Provide the published private support route and operator CLI for report review, account disable and unsafe-session cancellation. Restrict operator credentials, record actor/reason/time and never derive operator permission from public profile ownership. Review reports daily during the pilot, targeting first response within 72 hours without promising 24/7 coverage. Sensitive reports must not use public GitHub issues. Publish the actual private support contact and policy pages before invitations.
+Provide private reporting and the operator CLI with per-action credentials and audited actor/reason/time. Publish versioned terms/community rules and support contacts before invitations. Block/unblock is an end-user feature governed by [Product scope](./product-scope.md#account-deletion-and-safety), with server-enforced effects in [Data and API](./data-and-api.md#immediate-security-transactions).
+
+Use a small versioned English/Italian deterministic public-text rule set: Unicode normalization for detection, known targeted abuse/hate/threat/sexual-content patterns and disallowed active markup/link/contact patterns. Reject a matched submission with `422 CONTENT_NOT_ALLOWED`, preserve the user's local draft, and explain edit/report/appeal options. Apply the filter before public profile updates, publication and public-field edits; private reports can describe prohibited content and remain restricted. Do not silently publish rejected revisions or claim full multilingual detection. Human review handles reports in other languages; no paid moderation API or AI service is required.
+
+Operators can review a report, remove the offending public text/content, suspend an account and cancel unsafe games. When a session is taken down, deny discovery/exact detail immediately and send safe cancellation/tombstone events. A bad public profile is hidden until corrected/reviewed; suspension uses the immediate safety transaction, not delayed background authorization. Keep evidence only in restricted report records under retention, never push/logs or public issues. Do not provide client-side moderation overrides. Rule corrections/false-positive appeals are reviewed and deployed as versioned changes.
+
+Review the queue daily during the pilot. Target an initial response within 24 hours for threats, private-location disclosure or urgent safety reports and within 72 hours otherwise; these are maintainer response targets, not 24/7 guarantees. Pause new pilot invitations if safe moderation capacity is unavailable. Record action/reason/resolution and a private appeal route. Test reported-player blocks and active shared-game withdrawals before pilot.
+
+This feature set follows the published [Apple UGC safeguards](https://developer.apple.com/app-store/review/guidelines/#user-generated-content) and [Google Play UGC policy](https://support.google.com/googleplay/android-developer/answer/9876937/user-generated-content). Actual store review remains a release gate; filters and reports do not constitute a blanket compliance guarantee.
 
 ## Retention schedule
 
@@ -54,12 +62,17 @@ These are adopted product limits, not statutory durations or a worldwide complia
 | Saved venue/precise saved location | While explicitly saved by an active owner | Owner-only; delete on owner request/account deletion. Independent from session snapshots |
 | Unpublished session draft | 30 days after last host edit | Delete draft/private snapshot |
 | Session/participation history | 90 days after end/cancellation | Delete personal history; no indefinite movement analytics |
+| Session format snapshots and assignments | Same session/account retention as their owner | Rules/custom text and team/role IDs contain no precise location; remove personal assignment links with history/deletion |
+| Non-personal format revisions / private suggestions | Revisions retained / unresolved suggestions expire at 90 days from submission, resolved suggestions purged within 90 days | Earlier account deletion removes suggestion identity/content; do not turn submissions into unmoderated global entries |
 | Exact session address/map and prior revisions | 7 days after end/cancellation | Deny access at completion/cancellation; purge all precise revisions separately from city-level history |
 | In-app notification | 90 days from creation | Paginated inbox, no precise address; earlier deletion applies |
-| Successful delivery/command result | 7 days after completion | Minimal IDs/outcomes and safe projection; erase private command input on commit/terminal rejection |
+| Successful delivery payload | Maximum 7 days after completion | Minimal IDs/outcomes; no precise location |
+| Command receipt/result | Usable for 7 days after terminal outcome; physical purge by next daily run, maximum 8 days | Keep keyed digest/IDs for duplicate protection; reject logical expiry even before physical cleanup |
+| User block relation | Until owned unblock or either account's purge | Private directed pair; unblock/purge never recreates a seat; delete labels with the account |
+| User sync cursor / deletion progress | While account active / until purge finishes | Minimal revision/progress metadata; no retained map payload; purge with account |
 | Failed delivery diagnostics | 30 days from terminal failure | Redacted codes/IDs, no user content or provider secrets; bounded retries |
-| Prepared/unaccepted command | 24 hours | No business effects; expire encrypted input and reject late execution |
-| Pending command input | Until execution, maximum 24 hours | Encrypted/owner-restricted; expired command cannot mutate data |
+| Prepared/unaccepted command input | Maximum 24 hours | Two-minute execution eligibility only; materialize expiry and retain minimal receipt rather than re-admit a deleted preparation |
+| Pending command input | Erase on terminal outcome; physical maximum 24 hours | Two-minute execution deadline; delayed workflows cannot mutate after expiry; command outcome differs from delivery status |
 | Push association | Until logout/deletion or 90 days without foreground use | Remove on logout, disable invalid tokens; foreground registration renews last-seen |
 | Auth sessions/refresh hashes | 30-day inactivity, 90-day absolute lifetime | Minimal expired/revoked session and consumed-token tombstones kept 30 further days for reuse detection; no raw refresh secret |
 | Auth transactions/completion codes | 10 minutes / 60 seconds | Single-use; reject by timestamp even before daily cleanup |
@@ -70,7 +83,7 @@ These are adopted product limits, not statutory durations or a worldwide complia
 | Backups/exports | Maximum 30 days from creation | Private/encrypted/bounded; replay deletion ledger and retention before serving a restore |
 | Test fixtures/failure artifacts | Fixtures per run; artifacts maximum 7 days | Synthetic only, within included storage; no production copies in public CI |
 
-Maintenance rechecks the current lifecycle/version and end/cancel time before purging edited sessions; obsolete timers cannot erase a rescheduled active session. Saved venues have their own purpose. Remove orphaned exact-location revisions with drafts/history. Daily batches select records whose expiry falls before the next scheduled run, purging slightly early rather than exceeding maximum periods; account deletion cannot exceed 30 days. Application authorization also checks expiry immediately, independently of physical cleanup.
+Maintenance rechecks the current lifecycle/version and end/cancel time before purging edited sessions; obsolete timers cannot erase a rescheduled active session. Saved venues have their own purpose. Remove orphaned exact-location revisions with drafts/history. Daily batches select records whose maximum retention falls before the next scheduled run, purging slightly early where no minimum replay window applies. Command receipts retain the full seven-day logical replay window and are purged by the next run within eight days; they cannot be used after logical expiry. Account deletion cannot exceed 30 days. Application authorization also checks expiry immediately, independently of physical cleanup.
 
 Provider-managed backups/logs may not be individually erasable. Document those limits; row deletion does not instantly erase backups. On restore keep traffic disabled, replay the current deletion ledger and time-based retention, invalidate restored auth/push credentials, and only then reopen. Never revive a deleted account or send old queued notifications.
 
@@ -80,9 +93,25 @@ Use included Neon instant restore first: up to six hours bounded by change volum
 
 Supplement with a private non-synced directory on the maintainer's existing PC outside all Git repositories. Manually run a custom-format `pg_dump` weekly and immediately before production migrations, streamed into `age` public-key encryption without a plaintext dump. Keep the decryption key separately. Retain at most four weekly exports plus one pre-migration copy, expire each within 30 days and cap local storage at 5 GB. Check disk space and Neon transfer quota first; failed mandatory pre-migration export blocks release. This is a manual operational duty, not unattended backup automation.
 
-Update an encrypted copy of the minimal deletion ledger after each completed deletion and before exports. Consult the live ledger when available; if neither a current ledger nor recovery-safe deletion record is available, keep the restored service offline. Never put production dumps/deletion records in public CI artifacts, repository history, or shared drives. No off-site storage account/capacity is assumed.
+Update an encrypted copy of deletion-request and purge-completion ledger entries during the daily operator check and before exports, including requested deletions whose physical purge is incomplete. Consult the live ledger when available; if neither a current ledger nor recovery-safe deletion record is available, keep the restored service offline. Never put production dumps/deletion records in public CI artifacts, repository history, or shared drives. No off-site storage account/capacity is assumed.
 
 Before the pilot and every three months, restore into a private isolated database, apply ledger/retention, validate schema/relationships, and record only a redacted drill result. Pilot recovery target: one working day once operator/copy are available; fallback export data may be seven days old if weekly exports succeeded. Missed duties, hardware loss, provider failure, or exhausted quota can increase loss/outage. These limitations are accepted for this zero-budget pilot; independent automated disaster recovery is outside the funded MVP, not an open product decision.
+
+## Format catalogue operations
+
+The API repository owns version-controlled catalogue/profile/alias definitions and validation fixtures. Review the [complete format specification](./formats.md#catalogue-lifecycle-and-rules-changes) weekly during pilot, before release and before announced rotations/availability changes. Operators review private format suggestions; a suggestion never blocks legitimate Custom hosting or directly writes global catalogue IDs. Curated changes follow Gitflow and publish immutable revisions with en/it labels, source references, checked dates and capability tests.
+
+Verify a current governing source before labelling a preset Reviewed summary, especially regional Highlander/Old School rules and client-specific lists. If a source is unavailable, keep host-declared/needs-review metadata visible rather than guessing numbers or silently changing rules. Keep announced Alchemy availability and other digital lifecycle dates as reviewable data. Retire current-client selections only with a visible supported-availability policy; old session rule snapshots remain readable. Catalogue maintenance is bounded data review, not a polling process on player/session notifications.
+
+Non-personal catalogue revisions and rule-source references can remain for historical interpretation. Private suggestion text uses account deletion rules; unresolved suggestions expire at 90 days from submission, and resolved text is purged at most 90 days after resolution; SessionFormat house text and assignments follow their session/account retention, with no copy of addresses in a rules snapshot. Extend restore/migration checks to pinned catalogue IDs so a recovered game never points to a different format/profile. Review schema/alias collisions and malicious custom labels/references before publishing an operator change.
+
+No paid card/rules/price API or source-scraping job is required. Use generated/bundled/cached catalogue metadata; public source links are opened only explicitly. Keep existing session/traffic limits and 16-person maximum, with one-person capacity solely for declared solo/custom/cooperative plans. In-person device play does not buy software, supply player accounts or handle booster/card payments; materials and client access are host/participant arrangements.
+
+## Admission and review operations
+
+Enforce the [numeric admission limits](./data-and-api.md#validation-and-admission-limits) through shared atomic database buckets and resource locks. Ordinary creation/search limits never consume dedicated deletion, logout, block, cancellation or withdrawal allowance. If an upstream service is unavailable, preserve committed safety effects, show explicit retry state and do not switch to paid resources. Use revision-safe snapshots for recovery, not a quota-consuming poller.
+
+The signed-out demo is packaged locally as specified in [Quality and release](./quality-and-release.md#store-review-access); it adds no cloud service, real users or production traffic. Demo reset/exit clears all synthetic data; no real reports or support submissions are sent from it.
 
 ## CI costs
 
