@@ -55,6 +55,10 @@ Standard runner compute is free for the public repositories under [GitHub Action
 
 API E2E also covers hidden drafts, DTO whitelisting, bounded pagination, request throttling, and an attempt to approve another host's applicant. Verify body-based discovery/address lookup never logs sensitive input. Use synthetic host, player, unrelated user, public venue, and private venue fixtures. Add cases for valid, invalid, expired, forbidden, duplicate, and conflicting operations where the feature supports them. Full format coverage is accepted; use the versioned catalogue and required configuration/host-declared fixtures in [Formats](./formats.md), without assuming Commander is the only launch format.
 
+## OpenAPI contract checks
+
+During backend scaffolding, add schema validation for the generated OpenAPI artifact and checks for unique operation IDs, documented business routes, bearer security declarations and representative DTO/error examples. Keep the exported and served specifications aligned. API E2E verifies `/docs` serves Swagger UI and `/docs-json` serves valid OpenAPI JSON in local/staging configurations, including when staging uses `NODE_ENV=production`; both routes and any YAML route are absent in the production configuration. Trying a protected business endpoint without valid application credentials must still fail. Run these checks with each API contract change; schema validation supplements the behavioral tests above.
+
 ## Format coverage and configuration tests
 
 All-format organizing support is required at first release. Test the entire catalogue as data plus every capability branch as behavior; an example five-format seed is insufficient. Card/deck legality and live digital game queues are external boundaries, not mocked guarantees.

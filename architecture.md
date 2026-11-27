@@ -11,7 +11,7 @@ Use a NestJS modular monolith backed by PostgreSQL with PostGIS, and a React Nat
 | Server state | TanStack Query | Fetching, invalidation, pagination, and mutation feedback |
 | Forms | React Hook Form and Zod | Client input validation and useful field errors |
 | API | NestJS with TypeScript and REST | Feature modules, validation, guards, and service boundaries |
-| API contract | NestJS OpenAPI generation | Documented endpoints and generated mobile client types |
+| API contract | @nestjs/swagger OpenAPI generation and Swagger UI | Interactive API documentation and generated mobile client types |
 | Database | PostgreSQL with PostGIS | Transactions, relational constraints, and geographic indexing |
 | Persistence | TypeORM migrations and parameterized PostGIS queries | Explicit schema changes and location search |
 | Authentication | Google and Apple only, with NestJS-owned application sessions | Explicit linking, immediate revocation, and native/browser flows as specified in the authentication document |
@@ -109,7 +109,7 @@ Return stable machine-readable API error codes for the app to localize. Verify t
 
 ## Repository responsibilities
 
-The API repository owns the schema, migrations, API, OpenAPI export, database fixtures, and API CI. The app repository owns the mobile experience, generated API client, device configuration, and mobile CI.
+The API repository owns the schema, migrations, API, Swagger UI, OpenAPI export, database fixtures, and API CI. The [API documentation contract](./data-and-api.md#openapi-and-swagger-ui) defines routes, environment exposure and schema requirements. The app repository owns the mobile experience, generated API client, device configuration, and mobile CI.
 
 Publish a versioned OpenAPI artifact from backend CI, then update the app client in a reviewed app change. Keep additive changes compatible with older installed app versions. Use `/v1` for the initial API and maintain a staging API that development builds can reach from physical devices.
 

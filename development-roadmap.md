@@ -26,7 +26,7 @@ Repository setup:
 Backend tasks:
 
 - Scaffold NestJS with strict TypeScript, linting, formatting, unit tests and supported Node.js. Add versioned catalogue/profile/schema seed data and generated client metadata; all-format support is a first-release requirement, not a later expansion.
-- Add environment validation, minimal health routes, global request validation, structured logs, and OpenAPI generation.
+- Add environment validation, minimal health routes, global request validation and structured logs. Configure @nestjs/swagger, Swagger UI, OpenAPI JSON, bearer authorization and the CI schema export under the [API documentation contract](./data-and-api.md#openapi-and-swagger-ui); verify local/staging availability and production route exclusion.
 - Add Docker Compose with PostgreSQL and PostGIS, TypeORM configuration, and an initial extension migration.
 - Validate Vercel Hobby, Neon Free/PostGIS, small pools, migrations, isolated environments, and provider callback configuration. Prototype the selected Workflow/Nest Vercel consumer, durable command acceptance and crash recovery within free quotas, including 202/pending UI behavior without polling. Failed technical acceptance blocks launch, not a new product vote.
 - Commit an example environment file, local setup instructions, lockfile, and CI for lint, type checks, and tests.
