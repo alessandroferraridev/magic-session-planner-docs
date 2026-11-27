@@ -62,6 +62,8 @@ These are adopted product limits, not statutory durations or a worldwide complia
 | Saved venue/precise saved location | While explicitly saved by an active owner | Owner-only; delete on owner request/account deletion. Independent from session snapshots |
 | Unpublished session draft | 30 days after last host edit | Delete draft/private snapshot |
 | Session/participation history | 90 days after end/cancellation | Delete personal history; no indefinite movement analytics |
+| Session format snapshots and assignments | Same session/account retention as their owner | Rules/custom text and team/role IDs contain no precise location; remove personal assignment links with history/deletion |
+| Non-personal format revisions / private suggestions | Revisions retained / unresolved suggestions expire at 90 days from submission, resolved suggestions purged within 90 days | Earlier account deletion removes suggestion identity/content; do not turn submissions into unmoderated global entries |
 | Exact session address/map and prior revisions | 7 days after end/cancellation | Deny access at completion/cancellation; purge all precise revisions separately from city-level history |
 | In-app notification | 90 days from creation | Paginated inbox, no precise address; earlier deletion applies |
 | Successful delivery payload | Maximum 7 days after completion | Minimal IDs/outcomes; no precise location |
@@ -94,6 +96,16 @@ Supplement with a private non-synced directory on the maintainer's existing PC o
 Update an encrypted copy of deletion-request and purge-completion ledger entries during the daily operator check and before exports, including requested deletions whose physical purge is incomplete. Consult the live ledger when available; if neither a current ledger nor recovery-safe deletion record is available, keep the restored service offline. Never put production dumps/deletion records in public CI artifacts, repository history, or shared drives. No off-site storage account/capacity is assumed.
 
 Before the pilot and every three months, restore into a private isolated database, apply ledger/retention, validate schema/relationships, and record only a redacted drill result. Pilot recovery target: one working day once operator/copy are available; fallback export data may be seven days old if weekly exports succeeded. Missed duties, hardware loss, provider failure, or exhausted quota can increase loss/outage. These limitations are accepted for this zero-budget pilot; independent automated disaster recovery is outside the funded MVP, not an open product decision.
+
+## Format catalogue operations
+
+The API repository owns version-controlled catalogue/profile/alias definitions and validation fixtures. Review the [complete format specification](./formats.md#catalogue-lifecycle-and-rules-changes) weekly during pilot, before release and before announced rotations/availability changes. Operators review private format suggestions; a suggestion never blocks legitimate Custom hosting or directly writes global catalogue IDs. Curated changes follow Gitflow and publish immutable revisions with en/it labels, source references, checked dates and capability tests.
+
+Verify a current governing source before labelling a preset Reviewed summary, especially regional Highlander/Old School rules and client-specific lists. If a source is unavailable, keep host-declared/needs-review metadata visible rather than guessing numbers or silently changing rules. Keep announced Alchemy availability and other digital lifecycle dates as reviewable data. Retire current-client selections only with a visible supported-availability policy; old session rule snapshots remain readable. Catalogue maintenance is bounded data review, not a polling process on player/session notifications.
+
+Non-personal catalogue revisions and rule-source references can remain for historical interpretation. Private suggestion text uses account deletion rules; unresolved suggestions expire at 90 days from submission, and resolved text is purged at most 90 days after resolution; SessionFormat house text and assignments follow their session/account retention, with no copy of addresses in a rules snapshot. Extend restore/migration checks to pinned catalogue IDs so a recovered game never points to a different format/profile. Review schema/alias collisions and malicious custom labels/references before publishing an operator change.
+
+No paid card/rules/price API or source-scraping job is required. Use generated/bundled/cached catalogue metadata; public source links are opened only explicitly. Keep existing session/traffic limits and 16-person maximum, with one-person capacity solely for declared solo/custom/cooperative plans. In-person device play does not buy software, supply player accounts or handle booster/card payments; materials and client access are host/participant arrangements.
 
 ## Admission and review operations
 

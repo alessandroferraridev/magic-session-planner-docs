@@ -46,7 +46,8 @@ NestJS verifies Google/Apple credentials and owns internal users, authorization 
 - `Auth`: Google/Apple verification, internal identity resolution/linking, application tokens, refresh rotation, and session revocation.
 - `Users`: display profiles, preferences, and deletion requests.
 - `Venues`: owner-managed saved venues, canonical city references and separately protected exact locations for every venue type.
-- `Sessions`: drafts, editable business fields and host participation, versioned updates, publishing, cancellation, and lifecycle jobs.
+- `Formats`: versioned definitions/profiles, normalized alias search, compatible declarative settings, suggestions and public non-personal catalogue snapshots.
+- `Sessions`: drafts, format snapshots, group/team/role plans, editable host participation, versioned updates, publishing, cancellation and lifecycle jobs.
 - `Participation`: requests requiring host approval, optional approved host membership, withdrawal, and capacity transactions.
 - `Discovery`: canonical city-level filtering/ranking and pagination, with no distance labels in public responses.
 - `Moderation`: basic reports and operator actions before public launch.
@@ -72,6 +73,14 @@ The API is authoritative for capacity and membership. Mobile adapters implement 
 Use a separate transactional UserSyncCursor for recipient ordering, independent of session aggregate version. The [snapshot/event protocol](./delivery-and-recovery.md#snapshot-and-event-merge) owns listener buffering, tombstones, account-generation guards, pagination watermarks and explicit recovery. Security transactions remain immediate when the queue is unavailable; ordinary accepted commands follow the documented outcome/deadline/idempotency state machine.
 
 The release app exposes a signed-out local demo through the same feature interfaces and a separate in-memory adapter/query namespace. Demo role/position/push simulation never authenticates a real user, reaches production resources or changes the current-location rule for real discovery. The [review specification](./quality-and-release.md#store-review-access) owns packaging, coverage and store-acceptance gates.
+
+## Format catalogue boundary
+
+[Formats and session configuration](./formats.md) owns full organizing coverage. The API owns immutable definitions/profiles, declarative capability schemas and validated session snapshots. Store normalized code/revision/media/family selectors in indexed relational fields and bounded conditional configuration in JSONB; use parameterized joins for primary/base/modifier facets. No live deck/card-price database or paid format provider is introduced.
+
+Generate app-safe metadata from version-controlled catalogue revisions. The React Hook Form/Zod controls render a finite set of known field/capability types; server-owned validators remain authoritative and reject unknown field/schema capabilities. Cache non-personal definitions by revision/locale with ETag support. Explicit picker/detail actions can refresh them; notification receipt never triggers a catalogue fetch. Unknown newer schemas render safe read-only summaries and an explicit update action rather than dropping fields.
+
+Team/role assignments are session business state, not organization profiles or group bookings. Use the session lock and aggregate revisions for configuration/approval/assignment changes; membership, capacity and safety always dominate informational readiness. A named digital format only changes equipment/client requirements for a physical gathering. No remote destination, digital account integration, game server or tournament engine is implied.
 
 ## Geographic search
 
