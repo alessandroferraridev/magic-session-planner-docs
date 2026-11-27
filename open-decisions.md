@@ -1,9 +1,5 @@
 # Open decisions
 
-## Initial formats
+No product decisions are currently open.
 
-Choose whether the first version supports **Commander only** or an explicit catalogue of **multiple formats**.
-
-This determines the initial seeded catalogue, host form choices and discovery filters. Commander remains a candidate, not a confirmed launch restriction.
-
-Product requirements are in [Product scope](./product-scope.md). The [documentation index](./README.md#documentation-by-topic) links the dedicated specifications for authentication, architecture, data, notifications, operations, tests and Git.
+Format coverage is defined in [Formats and session configuration](./formats.md). Implementation, source/profile verification and release evidence are tracked in the [development roadmap](./development-roadmap.md).

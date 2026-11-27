@@ -22,11 +22,11 @@ Everyone who completes the required personal-profile onboarding can host. Venue 
 - The interface supports English and Italian. Language selection is independent of where a session is hosted.
 - API and app development must include unit, integration, and E2E tests, implemented alongside their features from the initial scaffold. See the [testing strategy](./testing-strategy.md).
 
-## Scope boundaries and initial formats
+## Format coverage and scope boundaries
 
-The only [open decision](./open-decisions.md) is the initial format catalogue. Authentication implementation is defined in [Authentication](./authentication.md); infrastructure and retention are defined in [Operations](./operations.md).
+All formats are in scope for session planning from the first release: official entries, community/historical variants and a structured Custom path. [Formats and session configuration](./formats.md) owns the catalogue, media/preparation/layout differences and required host fields. Authentication and operations retain their dedicated specifications; no product choice remains open.
 
-- Initial formats remain undecided: Commander only or an explicit multi-format catalogue. Store formats as stable extensible catalogue codes; examples do not select launch formats.
+- Use versioned catalogue identities/profiles with aliases and immutable session rule snapshots. Unknown named formats use the moderated Custom/host-declared path; they do not require arbitrary global database codes. Support every family at launch rather than postponing non-Commander formats.
 - The app uses foreground location only.
 - Account access is required to browse and participate. Payments, chat, competitive matchmaking, deck management, ratings, and tournament brackets are outside the MVP.
 
@@ -46,7 +46,7 @@ Use the venue's IANA timezone to interpret and display session time, retaining U
 2. Explain why location is useful, then request foreground permission when the player chooses to use their location.
 3. Fetch the current foreground device position. If permission is denied, location services are off, or lookup fails, show settings and retry actions. Nearby discovery waits for a usable current position; personal upcoming and hosted session lists remain usable.
 4. Show a list of future, published sessions with seats available. Default to a 10 km search radius, adjustable from 1 to 100 km, and a date window of the next seven days.
-5. Show format, start time, city, available seats, and host name. The location label is the city only, without venue name, address, map, or exact coordinates. Filter by date, radius, format, and player count; rank geographic results using city-level discovery data.
+5. Show the format/variant, paper or device-play medium, intent, start time, city, total available human seats and host name. The location label is the city only, without venue name, address, map, or exact coordinates. Filter by date/radius, canonical format/family/modifier, medium/intent and player count; rank geographic results using city-level discovery data.
 6. Open session details and request one seat. Clearly show pending, approved, rejected, and cancelled outcomes.
 
 The list must handle loading, no results, stale results, location failure, and network failure. Once approval is confirmed, session detail loads the protected exact address and map. The list remains city-only even for approved players. The precise map is part of the MVP detail flow.
@@ -54,12 +54,12 @@ The list must handle loading, no results, stale results, location failure, and n
 ### Host a session
 
 1. Choose a venue or create one, including its public area and location visibility.
-2. Enter a title, format, start and end time, timezone, total player capacity, language, accessibility notes, and a short description of the expected play style or deck strength. Choose whether to join as a player or only provide the table; the player option is selected by default and the available-seat preview reflects it.
+2. Choose a searchable format recipe/profile, then its conditional deck/pool, preparation, material, layout/team/role and paper/device fields. Enter title, time/timezone, total human capacity, language, accessibility and play-style notes. Distinguish current/frozen rules and show any host-declared deviations. Choose whether to join as a player or only provide the table; the player option is selected by default and the available-seat preview reflects it.
 3. Validate the draft and publish it. For private venues, show the host the exact address separately from the public area preview.
 4. Review requests and approve players while capacity remains. The host sees confirmed players and pending requests.
 5. Edit title, description, venue, location, format, time, capacity, and playing choice, or cancel the session. Existing confirmed players do not force cancellation and recreation. Persist a new session version and notify affected pending and approved players about material changes, with no exact address in notification payloads.
 
-Capacity can be changed but cannot fall below the resulting confirmed player count. A playing host opting out frees one seat; opting in requires one available seat, or a valid capacity increase in the same edit. These changes are transactional. Publishing does not reserve a third-party venue; the individual host remains responsible for any venue booking.
+Capacity can be changed but cannot fall below the resulting confirmed player count. It counts people across all games, not decks, teammates or automated adversaries. Per-game team/pod sizes are a separate validated layout. A source/rules/layout change is material and cannot silently evict players; incompatible assignments are cleared and readiness updated. A playing host opting out frees one seat; opting in requires one available seat, or a valid capacity increase in the same edit. These changes are transactional. Publishing does not reserve a third-party venue; the individual host remains responsible for any venue booking.
 
 ### Manage participation
 
@@ -107,7 +107,7 @@ Offer Try demo on the signed-out screen in both languages. A permanent Demo / fi
 | Completion | End-time authorization applies immediately; an idempotent scheduled job persists completion using a separate completion generation, unaffected by seat changes |
 | Joining cutoff | Requests and approvals stop at the session start time |
 | Location visibility | City only in discovery and before approval; exact address and map only for the host and active approved participants in active session detail |
-| Time | Store UTC instants and venue IANA timezone; display venue time and zone. Capacity 2-16; publishing requires a future start/end and a configured format |
+| Time and layout | Store UTC instants and venue IANA timezone. Human capacity 1-16, with solo capacity only for an explicit solo/cooperative/custom profile. Publishing needs future time and structurally valid format setup, not already-full attendance |
 
 ## Required mobile screens
 
@@ -120,6 +120,7 @@ Offer Try demo on the signed-out screen in both languages. A permanent Demo / fi
 7. My upcoming sessions, profile, privacy preferences, and account deletion request.
 8. In-app notifications, push permission/preferences, command outcomes and authorized navigation from notification taps.
 9. Report/block controls, an owned block list and a signed-out fictional demo with reset/exit.
+10. Format catalogue/help, conditional setup and host-only group/team/role assignment, with reviewed/historical/house labels visible before joining.
 
 ## MVP acceptance criteria
 
@@ -128,6 +129,7 @@ Offer Try demo on the signed-out screen in both languages. A permanent Demo / fi
 - An ongoing game's participant can leave after a host edit; the seat frees but joining remains closed once started.
 - A delayed or rejected command, a lost push and a snapshot arriving after a newer event never display a false confirmation or remain labelled indefinitely as in progress.
 - The demo is fully navigable with fictional roles/data and cannot reach production credentials or mutation endpoints.
+- All format families have complete publish/discover/request/approve flows with the required materials/layout, including a custom declaration and an in-person device-play example. Role/format changes and safety withdrawals preserve seat/privacy invariants; no deck-legality or game-engine claim is implied.
 
 - A player can discover a published session within a selected area, request a seat, and see its approval from a second account.
 - A host can publish and cancel a session, approve requests, and inspect the current confirmed player count.

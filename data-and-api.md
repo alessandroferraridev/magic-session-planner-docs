@@ -14,9 +14,14 @@ Represent a scheduled table as a session and keep participation separate so requ
 | Venue | UUID, personal owner ID, name, city ID, timezone, accessibility notes, category | Category public_space/private_home is descriptive only; exact location remains protected for both |
 | VenueLocation | Venue ID, revision, exact address and point | Owner-only saved location, independently retained from session snapshots; no public coordinate access |
 | SessionLocation | Session ID, exact address, exact point, city ID, venue revision | Protected snapshot for every venue type; edits do not relocate unrelated sessions |
-| Session | UUID, host ID, hostParticipates, nullable venue ID, title, format, description, playLanguage, playStyleNotes, accessibilityNotes, starts at, ends at, timezone, capacity, lifecycle, version, completionGeneration, timestamps | hostParticipates defaults to true; end after start; accepted capacity 2 to 16; host owns the session |
+| Session | UUID, host ID, hostParticipates, nullable venue ID, title, format selection/revision snapshot, description, playLanguage, playStyleNotes, accessibilityNotes, starts at, ends at, timezone, capacity, lifecycle, version, completionGeneration, timestamps | hostParticipates defaults to true; end after start; human capacity 1 to 16 under profile/layout constraints; host owns the session |
 | Participation | UUID, session ID, user ID, status, requested at, decided at, decided by | Unique session and user; statuses pending, approved, rejected, withdrawn |
-| Format | Stable code, display label keys, enabled flag | Extensible catalogue; initial seeded values are the sole open choice |
+| FormatDefinition | UUID, stable code, kind/family tags, en/it labels and normalized aliases | Operator-owned catalogue including the complete official coverage and community/custom paths; aliases can suggest configuration without merging different rules authorities |
+| FormatDefinitionRevision / RulesProfile | Immutable revision/profile IDs, source/authority/review/lifecycle metadata, media/layout capabilities, schema version and declarative settings schema | Composite recipes pin base/modifier revisions; no user-supplied executable validators or silent changes to existing sessions |
+| SessionFormat | Session ID, definition/profile/dependency revisions, bounded formatSelection and sanitized rules snapshot | One current selection per session; material edits keep domain versions/notifications and preserve membership |
+| SessionGroup | UUID, session ID, group/team/role slots and structural limits | Host-controlled grouping under the session lock; not a reservation or a tournament bracket |
+| ParticipantAssignment | Session/group/team/role IDs and approved participation ID | At most one simultaneous slot per player, no overfilled or duplicate unique role; removed on withdrawal/host opt-out/safety action |
+| FormatSuggestion | UUID, submitter, moderated name/authority reference/rationale, state/timestamps | Private operator review; not required for valid custom publishing and cannot create global codes directly |
 | AuthTransaction | ID, provider/environment, nonce/challenge hashes, action/actor, expiry/consumption | Single use, ten-minute lifetime; browser completion code 60 seconds |
 | CommandOperation | UUID, actor/auth session, action and target resource ID, UUIDv7 idempotency key/keyed digest, encrypted input, state/revision, result/error code, prepared/accepted/deadline/terminal times | Two-minute execution deadline, atomic terminal outcome/event, seven-day minimal receipt/result; private input maximum 24 hours |
 | UserSyncCursor | User ID, monotonic recipient revision | Separate row from User; transactional resource projections and snapshot watermark |
@@ -73,6 +78,18 @@ After commit, enqueue delivery and physical provider/purge work using recorded I
 
 Protected location reads require an active caller/account, available host, published session with current end in the future, eligible membership and no host/caller block relation. Recheck after account disable even when an old JWT or event says approved. Discovery and ordinary detail exclude unavailable hosts and prohibited block relations; historical own records are redacted instead of exposing former addresses.
 
+## Format configuration and assignments
+
+[Formats and session configuration](./formats.md) owns the complete catalogue and semantic rules. Session create/edit DTOs accept a typed `formatSelection`: formatCode/revision, profileCode, schemaVersion, pinned base/modifier references when required, medium, playIntent, gamePlan, settings/logistics and any moderated host-declared rules. Resolve only known catalogue/profile revisions, validate their declarative conditional fields and store an immutable sanitized SessionFormat snapshot. A literal format string or a client-supplied rules schema is not sufficient. Preserve historical revision reads and support safe readonly rendering on older clients; return `409 FORMAT_PROFILE_CHANGED` or `422 UNSUPPORTED_FORMAT_SCHEMA` with an explicit picker/update action when edits cannot be represented.
+
+Canonical entries include all current official hub labels, the named community/historical templates and Custom. Search aliases can return multiple disambiguation choices and suggested settings: EDH maps to Commander; cEDH maps to Commander/competitive; Brawl and Commander 1v1 cannot silently select a different rules authority/client. Definition status/review state and client availability are separate fields. New current-client events cannot use a known-unavailable profile without an explicit supported historical/house reconstruction.
+
+A session card returns a compact formatSummary with primary/base codes, definition/profile revisions, localized display label, modifier codes, medium, intent and any compatible bracket label. Full non-location setup is available in authenticated ordinary detail before approval. Discovery matches primary/base/family/modifier identities with OR within each selected facet and AND across different facets, plus medium/intent filters. Custom labels participate in a bounded name query; a custom label never becomes a global code. A catalogue source reference contains no venue/user location.
+
+Game plans are structural slot plans: capacity counts 1-16 humans over the whole session, including a playing host. Group/team/role rows are created or updated under the session lock in the same transaction as SessionFormat. Team Draft/Sealed team matches remain sets of individual duels, distinct from shared-turn 2HG games. Approvals allocate one membership; optional preferredGroupId/preferredTeamId/preferredRole are preferences only. The host can assign an approved player during approval or through the assignment endpoint. A playing host defaults to the first compatible slot; a non-playing host has no assignment. Reject overfilled/foreign/overlapping assignments and duplicate exclusive roles.
+
+Format/layout edits require expectedVersion and increment the aggregate version with recipient events. Preserve approved players, reject capacity below confirmed count, clear only incompatible assignments and return derived readiness (waiting-for-players/needs-assignments/ready per group). Readiness is not session lifecycle and does not start a match or reserve seats. Withdrawal, deletion, cancellation, blocking and host opt-out remove assignments atomically and must not fail just because a team becomes uneven or a unique role becomes vacant. Joining/approval cutoff remains the session start time. Lock format/assignment edits and safety changes using the existing actor/command/session/membership/cursor order.
+
 ## Validation and admission limits
 
 These are accepted pilot limits, enforced transactionally across serverless instances. They are configurable operational settings in version control, never client authority. Apply the stricter user/IP limit; shared IP buckets use privacy-preserving keyed hashes and expire within 24 hours. Existing auth-specific limits remain in [Authentication](./authentication.md).
@@ -97,6 +114,10 @@ These are accepted pilot limits, enforced transactionally across serverless inst
 | Display name / session title / venue name | 2-40 / 3-80 / 2-80 Unicode code points after trim; reject controls |
 | Session description / play-style notes / accessibility notes | Maximum 2,000 / 500 / 500 code points; plain text |
 | Session playLanguage | Valid BCP 47 tag, maximum 35 ASCII characters, independent of en/it interface locale |
+| Format configuration | Maximum 8 KiB JSON within the 16 KiB public body; known schema/revisions, at most 4 modifiers, public house-rule summary maximum 2,000 code points |
+| Catalogue query/filter | Query 2-100 code points, page maximum 100, at most 10 selected primary/base/family codes; parameterized matching and alias disambiguation |
+| Custom/suggestion fields | Label 2-80, plain-text authority/reference 200, rationale 1,000 code points; moderated and never executable or fetched as an arbitrary URL |
+| Catalogue suggestions | 2 per user per 24 hours, 10 per IP; maximum 5 unresolved per submitter; not required for custom publishing |
 | Exact address / private report details | Maximum 500 / 2,000 code points; never public/push/log payloads |
 | Publication/schedule edit | Start no more than 90 days ahead; positive duration at most 24 hours. Published end must remain after server now; an ongoing game's start can remain past |
 
@@ -142,7 +163,9 @@ Authentication and completed onboarding are required for product routes; profile
 | `GET /me/blocks` | Own block list with paginated redacted identity labels |
 | `PUT /me/blocks/:userId` | Immediate owned block plus shared-game safety effects; only a visible/previously shared user target, never self |
 | `DELETE /me/blocks/:userId` | Remove only own directed block, without membership restoration |
-| `GET /formats` | Enabled format catalogue with stable codes and localized labels; seed after initial formats decision |
+| `GET /formats` | Versioned catalogue/search by locale, query, family, medium and lifecycle; stable aliases/disambiguation and ETag; complete all-format launch specification |
+| `GET /formats/:code/revisions/:revision` | Immutable public-rule/profile metadata and conditional field schema for a known revision; historical reads remain available |
+| `POST /format-suggestions` | Bounded private name/authority-reference/rationale suggestion for operator review; cannot create a global format ID |
 | `POST /discovery/search` | Nearby city-only sessions; current device position in the body, never the URL/query string |
 | `GET /me/operations/:id` | Own command state/revision/deadline and safe terminal result/error; bounded lock/expiry arbitration; explicit recovery only |
 | `POST /sessions` | Create a draft with hostParticipates defaulting to true; create an approved host membership only when the host plays, in the same transaction |
@@ -151,9 +174,10 @@ Authentication and completed onboarding are required for product routes; profile
 | `POST /sessions/:id/publish` | Host validates and publishes a draft |
 | `POST /sessions/:id/cancel` | Host cancels an active session; retries return its cancelled state |
 | `GET /sessions/:id/location` | Exact location for host or approved participants in an active session |
-| `POST /sessions/:id/requests` | Create/return own request with expectedVersion; a synchronous withdrawal fences earlier pending request commands |
+| `POST /sessions/:id/requests` | One-seat request with expectedVersion and optional existing group/team/role preference; withdrawal fences earlier pending commands |
 | `GET /sessions/:id/participants` | Host sees requests; approved players see limited confirmed profiles |
-| `PATCH /sessions/:id/requests/:requestId` | Host sets a pending request to approved or rejected |
+| `PATCH /sessions/:id/requests/:requestId` | Host approves/rejects one pending seat with expectedVersion; optional compatible assignment, never an entire team |
+| `PATCH /sessions/:id/participants/:participationId/assignment` | Host-only expectedVersion/group/team/role change for an approved player; no extra seat, pending-player exposure or ownership transfer |
 | `DELETE /sessions/:id/participation` | Immediate idempotent own withdrawal until end, including after start; never reopens joining by itself |
 | `GET /me/sessions?role=...&status=...` | Hosted, requested, or confirmed sessions, including cancelled history |
 | `GET /me/notifications` | Initial or explicit reconciliation inbox read, with cursor pagination; not a polling endpoint |
@@ -184,7 +208,7 @@ Content-Type: application/json
 }
 ```
 
-Return session ID, title, format, playLanguage, safe host ID/display name, UTC start/end, timezone, city, capacity, confirmed count, available seats and version. Discovery exposes no venue name, exact or approximate venue coordinates, map point, address, or precise distance. Unapproved detail uses the same city-only disclosure. The protected location endpoint returns the exact address and point for the host or an active approved participant to render the detail map.
+Return session ID, title, compact formatSummary, playLanguage, safe host ID/display name, UTC start/end, timezone, city, capacity, confirmed count, available seats and version. Discovery exposes no venue name, exact or approximate venue coordinates, map point, address, or precise distance. Unapproved detail uses the same city-only disclosure. The protected location endpoint returns the exact address and point for the host or an active approved participant to render the detail map.
 
 ## Contract rules
 
@@ -196,4 +220,4 @@ Return session ID, title, format, playLanguage, safe host ID/display name, UTC s
 - Require expectedVersion for ordinary session-targeting commands, including request and approval, to reject intent based on stale details. Safety operations apply to the latest state and can revoke despite stale UI. Require per-user idempotency keys for creation and notification-producing mutations. Use the durable command contract: committed success/domain error, or 202/pending with an operation ID after durable acceptance; no client polling. Retrying the same key/input returns the same operation/result. Never show a confirmed seat for a pending command. Keys, outcomes and expired-retry behavior follow [Delivery and recovery](./delivery-and-recovery.md#idempotency-window).
 - Return `Cache-Control: no-store` on protected location responses. Do not put private coordinates in discovery payloads, analytics, or push notification text.
 - Push events carry a small complete safe UI projection, event IDs, and monotonic aggregate versions, within the provider's payload limit. The client deduplicates and applies newer events directly without a read on each push; it reconciles on app entry or explicit refresh. Protected location is fetched only for an authorized detail view and is cleared locally on revocation events.
-- Generate and review OpenAPI examples for success, full tables, expired sessions, and authorization failures before integrating the mobile client.
+- Generate OpenAPI DTO/discriminator examples for every format capability, custom/historical and device play, team-match versus 2HG, revision errors, full tables and authorization failures. Validate the format example JSON and schema/role constraints before mobile integration.
